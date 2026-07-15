@@ -168,3 +168,43 @@ Replit can run the bot temporarily for development, but it is NOT the production
 - Secrets must go through Replit's environment-secrets storage — never hardcoded.
 - User wants: after finishing a chunk of work, update `replit.md` with what's
   done and what's left so the next agent knows where to pick up.
+
+## 2026-07-15 setup pass
+
+**raid-alert-bot (standalone, deployed to Koyeb by the user):**
+- `npm install` + `npm run build` (`tsc`) succeed with zero errors — code is
+  verified healthy.
+- The "Raid Alert Bot" Replit workflow fails, and is *expected* to fail here:
+  it throws `Missing required environment variable: RAID_KEY` because no
+  KAOS_API_KEY/DISCORD_WEBHOOK_URL/RAID_KEY secrets are set in this Replit
+  environment. That's fine — per user, this bot is not meant to run on
+  Replit; they deploy it to Koyeb themselves following the README/this file's
+  "Deployment: Koyeb" section. Do not add these as Replit secrets or try to
+  make the Replit workflow pass unless the user asks to run it here.
+
+**New SaaS scaffolding — "AVIV Clan+" (this is the "saas/website for clans"
+the user is building; separate from the raid-alert-bot above):**
+- `artifacts/api-server` — Express/TS API (routes: `auth`, `clans`, `members`,
+  `invite`, `joinRequests`, `alerts`, `push`, `discord`, `me`, `health`).
+  Discord-based auth (`src/routes/auth.ts`), session middleware
+  (`src/lib/session.ts`), a raid-listener manager
+  (`src/lib/raidListenerManager.ts`) and web-push (`src/lib/webPush.ts`) —
+  looks like the multi-tenant successor to raid-alert-bot's single-clan
+  Express server.
+- `artifacts/aviv-clan-plus` — React/Vite/Tailwind (shadcn) frontend. Pages:
+  `home`, `dashboard`, `search`, `invite`, `clans/*`. Landing page copy:
+  "Raid Alerts, Perfected" / "Tactical coordination software for Rust clans."
+  Auth flow is "Sign in with Discord".
+- Both artifacts existed as source but had never had `pnpm install` run at
+  the workspace root, so all three artifact workflows (`api-server`,
+  `aviv-clan-plus`, `mockup-sandbox`) failed with `vite: not found` /
+  `Cannot find package 'esbuild'`. Fixed by running `pnpm install` at the
+  repo root — all three now start cleanly. `api-server` logs
+  `VAPID keys not set — web push notifications disabled` (expected, no
+  secrets configured yet) and otherwise serves requests fine (401 on
+  `/api/auth/me` is expected when logged out).
+- **Not yet done:** no functional review of the AVIV Clan+ feature set was
+  performed beyond confirming the pages/routes exist and the servers boot.
+  Continuing that build-out (auth wiring, clan CRUD end-to-end, real data
+  instead of any stubs, connecting the frontend pages to the API server) is
+  proposed as a follow-up task — see project tasks.
