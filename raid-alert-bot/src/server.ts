@@ -4,6 +4,7 @@ import { config } from "./config";
 import { PushListenerHandle } from "./pushListener";
 import { VapidKeys } from "./vapidStore";
 import { addSubscriber, removeSubscriberByEndpoint, StoredSubscription } from "./subscribersStore";
+import { addNativeSubscriber, removeNativeSubscriber } from "./nativeSubscribersStore";
 
 const PUBLIC_DIR = path.join(__dirname, "..", "public");
 
@@ -48,6 +49,30 @@ export function createHealthServer(
       return;
     }
     removeSubscriberByEndpoint(endpoint);
+    res.status(200).json({ removed: true });
+  });
+
+  // Native (Android app) push subscription -- stores Expo push tokens.
+  app.post("/api/subscribe-native", (req, res) => {
+    const { token } = req.body as { token?: string };
+    if (!token || typeof token !== "string") {
+      res.status(400).json({ error: "Missing token" });
+      return;
+    }
+    const added = addNativeSubscriber(token);
+    console.log(
+      `Native subscriber ${added ? "added" : "already registered"}.`
+    );
+    res.status(201).json({ added });
+  });
+
+  app.post("/api/unsubscribe-native", (req, res) => {
+    const { token } = req.body as { token?: string };
+    if (!token || typeof token !== "string") {
+      res.status(400).json({ error: "Missing token" });
+      return;
+    }
+    removeNativeSubscriber(token);
     res.status(200).json({ removed: true });
   });
 

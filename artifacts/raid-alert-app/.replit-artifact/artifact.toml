@@ -1,0 +1,23 @@
+kind = "mobile"
+previewPath = "/raid-alert-app/"
+title = "TCK Raid Alert"
+version = "1.0.0"
+id = "artifacts/raid-alert-app"
+router = "expo-domain"
+
+[[services]]
+name = "expo"
+ensurePreviewReachable = "/status"
+paths = [ "/raid-alert-app/" ]
+localPort = 25610
+
+[services.development]
+run = "pnpm --filter @workspace/raid-alert-app run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/raid-alert-app", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/raid-alert-app", "run", "serve" ]
+
+[services.env]
+PORT = "25610"
+BASE_PATH = "/raid-alert-app/"

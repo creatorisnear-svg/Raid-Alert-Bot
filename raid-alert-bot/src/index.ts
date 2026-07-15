@@ -4,16 +4,18 @@ import { postRaidAlert } from "./discord";
 import { createHealthServer } from "./server";
 import { loadOrCreateVapidKeys } from "./vapidStore";
 import { initWebPush, pushAlertToSubscribers } from "./webPush";
+import { pushNativeAlert } from "./expoPush";
 
 let listenerHandle: PushListenerHandle | null = null;
 
 async function handleAlert(alert: RaidAlert) {
   console.log("Raid alert received:", alert.title, "-", alert.body);
 
-  // Fire both channels in parallel -- a failure in one doesn't block the other.
-  const [discordResult, pushResult] = await Promise.allSettled([
+  // Fire all three channels in parallel -- a failure in one doesn't block the others.
+  const [discordResult, pushResult, nativeResult] = await Promise.allSettled([
     postRaidAlert(alert),
-    pushAlertToSubscribers(alert),
+    pushAlertToSubscribers(alert),   // web-push to PWA subscribers
+    pushNativeAlert(alert),          // Expo push to Android app subscribers
   ]);
 
   if (discordResult.status === "rejected") {
@@ -23,7 +25,11 @@ async function handleAlert(alert: RaidAlert) {
   }
 
   if (pushResult.status === "rejected") {
-    console.error("Failed to push raid alert to clan app subscribers:", pushResult.reason);
+    console.error("Failed to push raid alert to PWA subscribers:", pushResult.reason);
+  }
+
+  if (nativeResult.status === "rejected") {
+    console.error("Failed to push raid alert to Android app subscribers:", nativeResult.reason);
   }
 }
 
