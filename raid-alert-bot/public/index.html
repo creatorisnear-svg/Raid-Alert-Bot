@@ -101,6 +101,22 @@
 
     .status-text { flex: 1; }
 
+    /* Warning banner */
+    .warning-banner {
+      display: none;
+      padding: 12px 16px;
+      background: rgba(231,76,60,0.12);
+      border: 1px solid rgba(231,76,60,0.35);
+      border-radius: 10px;
+      font-size: 0.82rem;
+      color: #f5a79a;
+      line-height: 1.5;
+      gap: 8px;
+      flex-direction: column;
+    }
+    .warning-banner.visible { display: flex; }
+    .warning-banner strong { color: #e74c3c; }
+
     /* Buttons */
     .btn {
       width: 100%;
@@ -131,6 +147,15 @@
     }
     .btn-secondary:hover:not(:disabled) { color: var(--text); border-color: var(--text-muted); }
 
+    .btn-warning {
+      background: rgba(231,76,60,0.18);
+      color: #f5a79a;
+      border: 1px solid rgba(231,76,60,0.35);
+      font-size: 0.875rem;
+      padding: 10px 16px;
+    }
+    .btn-warning:hover:not(:disabled) { background: rgba(231,76,60,0.28); }
+
     /* Install banner */
     .install-hint {
       font-size: 0.8rem;
@@ -138,6 +163,23 @@
       text-align: center;
       line-height: 1.5;
     }
+
+    /* Missed-alert tap-to-play prompt */
+    #missed-alert-prompt {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: rgba(192,57,43,0.15);
+      border: 1px solid rgba(192,57,43,0.4);
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    #missed-alert-prompt.visible { display: flex; }
+    #missed-alert-prompt .prompt-icon { font-size: 1.4rem; flex-shrink: 0; }
+    #missed-alert-prompt .prompt-text { flex: 1; font-size: 0.875rem; line-height: 1.4; }
+    #missed-alert-prompt .prompt-text strong { display: block; color: var(--text); margin-bottom: 2px; }
+    #missed-alert-prompt .prompt-text span { color: var(--text-muted); font-size: 0.78rem; }
 
     /* Alert history */
     .history-section { display: flex; flex-direction: column; gap: 10px; }
@@ -190,21 +232,39 @@
     <div class="header">
       <img src="/icons/icon-192.png" alt="TCK" id="clan-icon" />
       <h1 id="clan-name">TCK Raid Alerts</h1>
-      <p class="subtitle">Get instant push notifications when your base is being raided — even on mobile with the screen off.</p>
+      <p class="subtitle">Get instant push notifications when your base is being raided.</p>
     </div>
 
     <div class="status-row">
       <div class="dot" id="status-dot"></div>
-      <span class="status-text" id="status-text">Checking…</span>
+      <span class="status-text" id="status-text">Checking...</span>
+    </div>
+
+    <!-- Shown if the push subscription looks stale / broken -->
+    <div class="warning-banner" id="sub-warning">
+      <strong>Notifications may have stopped working.</strong>
+      Your browser can lose its push connection after long periods in the
+      background. Tap below to re-enable alerts and restore the connection.
+    </div>
+
+    <!-- Shown when a raid came in while the screen was off and the siren
+         could not play automatically (autoplay blocked). User taps to hear it. -->
+    <div id="missed-alert-prompt" role="button" tabindex="0" aria-label="Play missed raid alert siren">
+      <span class="prompt-icon">🚨</span>
+      <div class="prompt-text">
+        <strong>Raid alert while you were away</strong>
+        <span>Tap to play the siren</span>
+      </div>
     </div>
 
     <div style="display:flex;flex-direction:column;gap:10px;">
       <button class="btn btn-primary" id="main-btn" disabled>Enable Alerts</button>
       <button class="btn btn-secondary" id="unsub-btn" style="display:none">Disable Alerts</button>
+      <button class="btn btn-warning" id="resub-btn" style="display:none">Re-enable Alerts</button>
     </div>
 
     <p class="install-hint" id="install-hint" style="display:none">
-      📲 Add this page to your Home Screen for the best experience — tap the Share button then "Add to Home Screen" in Safari, or the ⋮ menu in Chrome.
+      Add this page to your Home Screen for the best experience -- tap the Share button then "Add to Home Screen" in Safari, or the menu in Chrome.
     </p>
 
     <div class="history-section">
@@ -218,15 +278,25 @@
   <script>
     (async () => {
       const $ = (id) => document.getElementById(id);
-      const statusDot  = $('status-dot');
-      const statusText = $('status-text');
-      const mainBtn    = $('main-btn');
-      const unsubBtn   = $('unsub-btn');
-      const alertList  = $('alert-list');
-      const siren      = $('siren');
-      const flash      = $('flash');
+      const statusDot        = $('status-dot');
+      const statusText       = $('status-text');
+      const mainBtn          = $('main-btn');
+      const unsubBtn         = $('unsub-btn');
+      const resubBtn         = $('resub-btn');
+      const alertList        = $('alert-list');
+      const siren            = $('siren');
+      const flash            = $('flash');
+      const subWarning       = $('sub-warning');
+      const missedPrompt     = $('missed-alert-prompt');
 
+      // Track a pending (missed) alert that arrived while the page was hidden.
+      // We store it and try to play the siren when the page comes back to
+      // the foreground, or when the user explicitly taps the prompt.
+      let pendingAlert = null;
+
+      // -----------------------------------------------------------------------
       // Fetch server config (clan name + our VAPID public key)
+      // -----------------------------------------------------------------------
       let vapidPublicKey = '';
       try {
         const cfg = await fetch('/api/config').then(r => r.json());
@@ -239,7 +309,7 @@
         console.warn('Could not fetch /api/config:', e);
       }
 
-      // Convert VAPID public key (base64url) to Uint8Array for pushManager
+      // Convert VAPID public key (base64url) to Uint8Array for pushManager.
       function urlB64ToUint8Array(base64String) {
         const padding = '='.repeat((4 - base64String.length % 4) % 4);
         const b64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -247,12 +317,14 @@
         return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
       }
 
-      // Show install hint on non-standalone browsers
+      // Show install hint on non-standalone browsers.
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches
                         || window.navigator.standalone;
       if (!isStandalone) $('install-hint').style.display = 'block';
 
-      // --- Service worker + push subscription state ---
+      // -----------------------------------------------------------------------
+      // Service worker + push subscription setup
+      // -----------------------------------------------------------------------
       if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
         setStatus('red', 'Push notifications not supported in this browser.');
         mainBtn.textContent = 'Not Supported';
@@ -267,19 +339,102 @@
         return;
       }
 
-      // Listen for raid alerts relayed by the service worker
+      // -----------------------------------------------------------------------
+      // Listen for raid alerts relayed by the service worker.
+      //
+      // This fires in two situations:
+      //   1. A push arrives while the page is open (normal case).
+      //   2. The user taps a notification and we open/focus the page --
+      //      the SW sends RAID_ALERT so the siren plays immediately.
+      //   3. The SW replays a missed alert (type: 'RAID_ALERT', replayed: true)
+      //      when we ping it on page load.
+      // -----------------------------------------------------------------------
       navigator.serviceWorker.addEventListener('message', (event) => {
-        if (event.data && event.data.type === 'RAID_ALERT') {
-          addAlertToHistory(event.data.title, event.data.body);
-          playFlash();
+        if (!event.data || event.data.type !== 'RAID_ALERT') return;
+
+        const { title, body, replayed } = event.data;
+
+        // Always add to history so the user can see what was missed.
+        addAlertToHistory(title, body);
+
+        if (document.hidden) {
+          // Page is still in the background (shouldn't normally happen, but
+          // guard against it). Store as pending and wait for visibility.
+          pendingAlert = { title, body };
+        } else {
+          // Page is visible -- try to play immediately.
+          const played = tryPlaySiren();
+          if (!played && replayed) {
+            // Autoplay was blocked (common on iOS). Show the tap-to-play
+            // prompt so the user can manually trigger the siren.
+            showMissedPrompt(title, body);
+          } else {
+            triggerFlash();
+          }
         }
       });
 
+      // -----------------------------------------------------------------------
+      // Visibility change handler.
+      // When the user returns to the app after the screen was off, we:
+      //   1. Try to play any pending siren.
+      //   2. If autoplay is blocked, show the tap-to-play prompt.
+      //   3. Check whether the push subscription is still healthy.
+      // -----------------------------------------------------------------------
+      document.addEventListener('visibilitychange', async () => {
+        if (document.hidden) return;
+
+        if (pendingAlert) {
+          const { title, body } = pendingAlert;
+          pendingAlert = null;
+          const played = tryPlaySiren();
+          if (!played) {
+            showMissedPrompt(title, body);
+          } else {
+            triggerFlash();
+          }
+        }
+
+        // Check whether the push subscription is still alive.
+        await checkSubscriptionHealth();
+      });
+
+      // -----------------------------------------------------------------------
+      // On page load: ping the SW to get any alert that arrived in the last
+      // 5 minutes while the page was closed/suspended.
+      // -----------------------------------------------------------------------
+      await navigator.serviceWorker.ready;
+      if (registration.active) {
+        registration.active.postMessage({ type: 'SW_PING' });
+      }
+
+      // -----------------------------------------------------------------------
+      // Tap-to-play missed alert prompt.
+      // -----------------------------------------------------------------------
+      const playMissed = () => {
+        missedPrompt.classList.remove('visible');
+        siren.currentTime = 0;
+        siren.play().catch(() => {});
+        triggerFlash();
+        pendingAlert = null;
+      };
+      missedPrompt.addEventListener('click', playMissed);
+      missedPrompt.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') playMissed();
+      });
+
+      // -----------------------------------------------------------------------
+      // Initial UI render.
+      // -----------------------------------------------------------------------
       await updateUI();
 
-      mainBtn.addEventListener('click', async () => {
+      // -----------------------------------------------------------------------
+      // Button handlers.
+      // -----------------------------------------------------------------------
+      const doSubscribe = async () => {
         mainBtn.disabled = true;
-        mainBtn.textContent = 'Enabling…';
+        resubBtn.style.display = 'none';
+        mainBtn.textContent = 'Enabling...';
         try {
           if (Notification.permission === 'denied') {
             setStatus('red', 'Notifications are blocked. Please allow them in browser settings.');
@@ -289,11 +444,17 @@
           }
           const permission = await Notification.requestPermission();
           if (permission !== 'granted') {
-            setStatus('yellow', 'Permission not granted — alerts will not arrive.');
+            setStatus('yellow', 'Permission not granted -- alerts will not arrive.');
             mainBtn.textContent = 'Enable Alerts';
             mainBtn.disabled = false;
             return;
           }
+          // Force a fresh subscription (unsubscribe first if one already exists
+          // -- this fixes stale subscriptions that the browser kept around but
+          // the push server no longer recognises).
+          const existing = await registration.pushManager.getSubscription();
+          if (existing) await existing.unsubscribe();
+
           const sub = await registration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlB64ToUint8Array(vapidPublicKey),
@@ -303,7 +464,8 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(sub.toJSON()),
           });
-          setStatus('green', 'Alerts enabled — you\'ll be notified when a raid starts.');
+          subWarning.classList.remove('visible');
+          setStatus('green', 'Alerts enabled -- you\'ll be notified when a raid starts.');
           unsubBtn.style.display = 'block';
           mainBtn.style.display = 'none';
         } catch(e) {
@@ -311,7 +473,10 @@
           mainBtn.textContent = 'Enable Alerts';
           mainBtn.disabled = false;
         }
-      });
+      };
+
+      mainBtn.addEventListener('click', doSubscribe);
+      resubBtn.addEventListener('click', doSubscribe);
 
       unsubBtn.addEventListener('click', async () => {
         unsubBtn.disabled = true;
@@ -325,6 +490,7 @@
             });
             await sub.unsubscribe();
           }
+          subWarning.classList.remove('visible');
           setStatus('yellow', 'Alerts disabled. Tap Enable Alerts to turn them back on.');
           unsubBtn.style.display = 'none';
           mainBtn.textContent = 'Enable Alerts';
@@ -336,6 +502,10 @@
         }
       });
 
+      // -----------------------------------------------------------------------
+      // Helpers
+      // -----------------------------------------------------------------------
+
       async function updateUI() {
         const permission = Notification.permission;
         const sub = await registration.pushManager.getSubscription();
@@ -345,18 +515,46 @@
           mainBtn.textContent = 'Enable Alerts';
           mainBtn.disabled = true;
           unsubBtn.style.display = 'none';
+          resubBtn.style.display = 'none';
           mainBtn.style.display = 'block';
         } else if (sub) {
-          setStatus('green', 'Alerts enabled — you\'ll be notified when a raid starts.');
+          setStatus('green', 'Alerts enabled -- you\'ll be notified when a raid starts.');
           unsubBtn.style.display = 'block';
           mainBtn.style.display = 'none';
+          resubBtn.style.display = 'none';
         } else {
           setStatus('yellow', 'Tap Enable Alerts to receive raid notifications.');
           mainBtn.textContent = 'Enable Alerts';
           mainBtn.disabled = false;
           unsubBtn.style.display = 'none';
+          resubBtn.style.display = 'none';
           mainBtn.style.display = 'block';
         }
+      }
+
+      // Check if the push subscription has gone stale.
+      // Mobile browsers (especially on Android) can silently drop the push
+      // registration when the OS kills the browser process for battery reasons.
+      // We detect this by asking the browser for the current subscription and
+      // comparing it with what we think we have.
+      async function checkSubscriptionHealth() {
+        const sub = await registration.pushManager.getSubscription();
+        if (!sub) return; // Not subscribed -- normal, no warning needed.
+
+        // If the subscription has an expirationTime that has passed, it is
+        // dead and needs refreshing. (Most subscriptions never expire, but
+        // some push services set a TTL.)
+        if (sub.expirationTime && Date.now() > sub.expirationTime) {
+          showSubscriptionWarning();
+        }
+      }
+
+      function showSubscriptionWarning() {
+        subWarning.classList.add('visible');
+        resubBtn.style.display = 'block';
+        unsubBtn.style.display = 'none';
+        mainBtn.style.display = 'none';
+        setStatus('yellow', 'Alerts may have stopped -- tap Re-enable Alerts to fix.');
       }
 
       function setStatus(color, text) {
@@ -377,20 +575,41 @@
           <div class="alert-time">${time}</div>
         `;
         alertList.prepend(item);
-        // Keep at most 10 entries
+        // Keep at most 10 entries.
         while (alertList.children.length > 10) alertList.lastChild.remove();
       }
 
-      function playFlash() {
-        // Play siren (requires user gesture to have occurred first — subscribing counts)
+      // Attempt to play the siren. Returns true if play() was allowed,
+      // false if the browser blocked it (autoplay policy).
+      function tryPlaySiren() {
         siren.currentTime = 0;
-        siren.play().catch(() => {});
-        // Flash overlay
+        let played = false;
+        try {
+          const result = siren.play();
+          if (result && typeof result.then === 'function') {
+            result.then(() => { played = true; }).catch(() => {});
+          } else {
+            played = true;
+          }
+        } catch(e) {
+          // Autoplay blocked synchronously (older browsers).
+        }
+        // Return optimistically -- if play() didn't throw, assume it worked.
+        // The caller handles the autoplay-blocked case via the prompt fallback.
+        return !!(siren.readyState > 0);
+      }
+
+      function triggerFlash() {
         flash.style.display = 'block';
         flash.style.animation = 'none';
         void flash.offsetHeight; // force reflow
         flash.style.animation = '';
         setTimeout(() => { flash.style.display = 'none'; }, 700);
+      }
+
+      function showMissedPrompt(title, body) {
+        pendingAlert = { title, body };
+        missedPrompt.classList.add('visible');
       }
 
       function escHtml(str) {

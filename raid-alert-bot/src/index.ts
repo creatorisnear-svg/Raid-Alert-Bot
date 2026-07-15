@@ -4,18 +4,16 @@ import { postRaidAlert } from "./discord";
 import { createHealthServer } from "./server";
 import { loadOrCreateVapidKeys } from "./vapidStore";
 import { initWebPush, pushAlertToSubscribers } from "./webPush";
-import { ntfyRaidAlert } from "./ntfy";
 
 let listenerHandle: PushListenerHandle | null = null;
 
 async function handleAlert(alert: RaidAlert) {
   console.log("Raid alert received:", alert.title, "-", alert.body);
 
-  // Fire all three channels in parallel -- a failure in one doesn't block the others.
-  const [discordResult, pushResult, twilioResult] = await Promise.allSettled([
+  // Fire both channels in parallel -- a failure in one doesn't block the other.
+  const [discordResult, pushResult] = await Promise.allSettled([
     postRaidAlert(alert),
     pushAlertToSubscribers(alert),
-    ntfyRaidAlert(alert),
   ]);
 
   if (discordResult.status === "rejected") {
@@ -26,10 +24,6 @@ async function handleAlert(alert: RaidAlert) {
 
   if (pushResult.status === "rejected") {
     console.error("Failed to push raid alert to clan app subscribers:", pushResult.reason);
-  }
-
-  if (twilioResult.status === "rejected") {
-    console.error("Failed to place Twilio raid-alert call:", twilioResult.reason);
   }
 }
 
