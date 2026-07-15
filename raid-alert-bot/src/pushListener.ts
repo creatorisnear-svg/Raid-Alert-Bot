@@ -157,6 +157,10 @@ export async function startPushListener(
   let lastEventAt: Date | null = null;
   let lastActivityAt: Date = new Date();
 
+  // Deduplication: the library replays previously-seen messages on reconnect.
+  // Track persistentIds so we never forward the same alert twice.
+  const seenIds = new Set<string>();
+
   const instance = new PushReceiver(receiverConfig as never);
 
   // Any protocol-level activity (heartbeat or message) proves the socket is
@@ -172,10 +176,26 @@ export async function startPushListener(
   // is alive but KAOS never sent anything" when debugging missed alerts.
   instance.onNotification((n: unknown) => {
     markActivity();
-    lastEventAt = new Date();
     console.log("Raw push notification received:", JSON.stringify(n));
+
+    const envelope = n as { persistentId?: string; message?: { title?: string; body?: string; data?: Record<string, unknown> } };
+
+    // Skip replayed messages the library re-delivers on reconnect.
+    if (envelope.persistentId) {
+      if (seenIds.has(envelope.persistentId)) {
+        console.log(`Skipping duplicate push (persistentId already seen): ${envelope.persistentId}`);
+        return;
+      }
+      seenIds.add(envelope.persistentId);
+      // Prevent unbounded growth -- keep only the last 200 IDs.
+      if (seenIds.size > 200) {
+        const first = seenIds.values().next().value;
+        if (first !== undefined) seenIds.delete(first);
+      }
+    }
+
+    lastEventAt = new Date();
     try {
-      const envelope = n as { message?: { title?: string; body?: string; data?: Record<string, unknown> } };
       const message = envelope.message || {};
       onAlert({
         title: message.title || "Raid Alert!",
