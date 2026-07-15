@@ -8,11 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { ShieldPlus, Loader2 } from 'lucide-react';
+import { ImageUpload } from '@/components/ui/image-upload';
+import { Plus, Loader2 } from 'lucide-react';
 
 const createClanSchema = z.object({
-  name: z.string().min(3, "Designation must be at least 3 characters").max(40, "Designation too long"),
-  imageUrl: z.string().url("Must be a valid URL").optional().or(z.literal('')),
+  name: z.string().min(3, "Name must be at least 3 characters").max(40, "Name is too long"),
+  imageUrl: z.string().optional().or(z.literal('')),
   isPrivate: z.boolean().default(false),
 });
 
@@ -21,7 +22,7 @@ type FormValues = z.infer<typeof createClanSchema>;
 export default function ClanCreate() {
   const [, setLocation] = useLocation();
   const createClan = useCreateClan();
-  
+
   const form = useForm<FormValues>({
     resolver: zodResolver(createClanSchema),
     defaultValues: {
@@ -32,12 +33,12 @@ export default function ClanCreate() {
   });
 
   const onSubmit = (data: FormValues) => {
-    createClan.mutate({ 
+    createClan.mutate({
       data: {
         name: data.name,
         imageUrl: data.imageUrl || undefined,
         isPrivate: data.isPrivate
-      } 
+      }
     }, {
       onSuccess: (newClan) => {
         setLocation(`/clans/${newClan.id}/settings`);
@@ -46,36 +47,36 @@ export default function ClanCreate() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto mt-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-display font-bold tracking-widest uppercase mb-2">Establish Division</h1>
-        <p className="text-muted-foreground font-mono">Register a new clan within the AVIV network.</p>
+    <div className="max-w-2xl mx-auto mt-4 md:mt-8 pb-24">
+      <div className="mb-6">
+        <h1 className="text-3xl font-display font-bold tracking-widest uppercase mb-2">Create Clan</h1>
+        <p className="text-muted-foreground font-mono">Set up your clan on the AVIV network.</p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <ShieldPlus className="h-5 w-5 text-primary" /> Parameters
+            <Plus className="h-5 w-5 text-primary" /> Clan Details
           </CardTitle>
-          <CardDescription className="font-mono">
-            Define the operational identity of your unit.
+          <CardDescription>
+            Fill in your clan's information below.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              
+
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-mono text-xs uppercase tracking-widest">Unit Designation</FormLabel>
+                    <FormLabel>Clan Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. OMEGA SQUAD" className="font-mono" {...field} />
+                      <Input placeholder="e.g. TCK, Night Raiders, Void" {...field} />
                     </FormControl>
-                    <FormDescription className="font-mono text-xs">
-                      The official name recognized on the network.
+                    <FormDescription>
+                      This is how your clan appears on the network.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -87,13 +88,13 @@ export default function ClanCreate() {
                 name="imageUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-mono text-xs uppercase tracking-widest">Insignia URL (Optional)</FormLabel>
+                    <FormLabel>Clan Image (Optional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://example.com/logo.png" className="font-mono" {...field} />
+                      <ImageUpload
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
                     </FormControl>
-                    <FormDescription className="font-mono text-xs">
-                      Direct link to an image file.
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -105,9 +106,9 @@ export default function ClanCreate() {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-none border p-4 bg-background">
                     <div className="space-y-0.5">
-                      <FormLabel className="font-mono text-xs uppercase tracking-widest">Covert Status</FormLabel>
-                      <FormDescription className="font-mono text-xs">
-                        If active, unit will not appear in public searches. Invites only.
+                      <FormLabel>Private Clan</FormLabel>
+                      <FormDescription>
+                        Hidden from search. Members can only join via invite.
                       </FormDescription>
                     </div>
                     <FormControl>
@@ -120,11 +121,11 @@ export default function ClanCreate() {
                 )}
               />
 
-              <Button type="submit" className="w-full" disabled={createClan.isPending}>
+              <Button type="submit" className="w-full" size="lg" disabled={createClan.isPending}>
                 {createClan.isPending ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <><Loader2 className="h-5 w-5 animate-spin mr-2" /> Creating...</>
                 ) : (
-                  "Initialize Division"
+                  "Create Clan"
                 )}
               </Button>
 

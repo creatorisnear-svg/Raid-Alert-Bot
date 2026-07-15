@@ -9,8 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ImageUpload } from '@/components/ui/image-upload';
 import { useLocation } from 'wouter';
-import { Loader2, Settings, Shield, Trash2, Key, Link as LinkIcon, Save, Users, Check, X } from 'lucide-react';
+import { Loader2, Settings, Shield, Trash2, Key, Save, Users, Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
@@ -31,7 +32,7 @@ export default function ClanSettings({ id }: { id: number }) {
   const { data: channels } = useListDiscordChannels(id, { query: { enabled: !!clan?.discordServerId } });
   const { data: roles } = useListDiscordRoles(id, { query: { enabled: !!clan?.discordServerId } });
   const { data: joinRequests } = useListJoinRequests(id, { query: { enabled: !!id } });
-  
+
   const updateClan = useUpdateClan();
   const deleteClan = useDeleteClan();
   const resolveRequest = useResolveJoinRequest();
@@ -45,7 +46,7 @@ export default function ClanSettings({ id }: { id: number }) {
       name: clan?.name || '',
       imageUrl: clan?.imageUrl || '',
       isPrivate: clan?.isPrivate ?? false,
-      raidKey: '', // Empty initially unless they want to update it
+      raidKey: '',
       discordServerId: clan?.discordServerId || '',
       discordChannelId: clan?.discordChannelId || '',
       pingRole: clan?.pingRole || ''
@@ -56,13 +57,12 @@ export default function ClanSettings({ id }: { id: number }) {
   if (!clan) return null;
 
   const onSubmit = (data: z.infer<typeof updateClanSchema>) => {
-    // Only send raidKey if it's not empty
     const updateData = { ...data };
     if (!updateData.raidKey) delete updateData.raidKey;
 
     updateClan.mutate({ clanId: id, data: updateData }, {
       onSuccess: () => {
-        toast({ title: "Configuration Saved", description: "Clan settings have been updated." });
+        toast({ title: "Settings Saved", description: "Clan settings have been updated." });
         queryClient.invalidateQueries({ queryKey: getGetClanQueryKey(id) });
       },
       onError: (err) => {
@@ -80,7 +80,7 @@ export default function ClanSettings({ id }: { id: number }) {
   };
 
   const handleDelete = () => {
-    if (confirm("WARNING: This will permanently delete the division and all logs. Proceed?")) {
+    if (confirm("Are you sure? This will permanently delete the clan and all its data. This cannot be undone.")) {
       deleteClan.mutate({ clanId: id }, {
         onSuccess: () => setLocation('/dashboard')
       });
@@ -88,42 +88,45 @@ export default function ClanSettings({ id }: { id: number }) {
   };
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
+    <div className="space-y-8 max-w-4xl mx-auto pb-24">
       <div>
-        <h1 className="text-3xl font-display font-bold tracking-widest uppercase mb-2">Division Settings</h1>
-        <p className="text-muted-foreground font-mono">Modify parameters for {clan.name}.</p>
+        <h1 className="text-3xl font-display font-bold tracking-widest uppercase mb-2">Clan Settings</h1>
+        <p className="text-muted-foreground font-mono">Manage settings for {clan.name}.</p>
       </div>
 
       <div className="grid grid-cols-1 gap-8">
-        
-        {/* Main Settings Form */}
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            
+
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Shield className="h-5 w-5 text-primary" /> Identity</CardTitle>
+                <CardTitle className="flex items-center gap-2"><Shield className="h-5 w-5 text-primary" /> Clan Info</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField control={form.control} name="name" render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-mono text-xs uppercase tracking-widest">Designation</FormLabel>
-                    <FormControl><Input className="font-mono" {...field} /></FormControl>
+                    <FormLabel>Clan Name</FormLabel>
+                    <FormControl><Input {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
+
                 <FormField control={form.control} name="imageUrl" render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-mono text-xs uppercase tracking-widest">Insignia URL</FormLabel>
-                    <FormControl><Input className="font-mono" {...field} /></FormControl>
+                    <FormLabel>Clan Image</FormLabel>
+                    <FormControl>
+                      <ImageUpload value={field.value} onChange={field.onChange} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
+
                 <FormField control={form.control} name="isPrivate" render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between border border-border p-4 bg-background">
                     <div>
-                      <FormLabel className="font-mono text-xs uppercase tracking-widest">Covert Status</FormLabel>
-                      <FormDescription className="font-mono text-xs">Hide from public searches.</FormDescription>
+                      <FormLabel>Private Clan</FormLabel>
+                      <FormDescription>Hidden from search. Members join by invite only.</FormDescription>
                     </div>
                     <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                   </FormItem>
@@ -133,24 +136,30 @@ export default function ClanSettings({ id }: { id: number }) {
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Key className="h-5 w-5 text-primary" /> Integration</CardTitle>
-                <CardDescription>Link KAOS+ sensors to your network.</CardDescription>
+                <CardTitle className="flex items-center gap-2"><Key className="h-5 w-5 text-primary" /> KAOS+ Integration</CardTitle>
+                <CardDescription>Connect KAOS+ to start receiving raid alerts.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField control={form.control} name="raidKey" render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-mono text-xs uppercase tracking-widest">KAOS+ Key</FormLabel>
-                    <FormControl><Input type="password" placeholder={clan.hasRaidKey ? "KEY CONFIGURED - ENTER NEW TO OVERWRITE" : "ENTER SENSOR KEY"} className="font-mono" {...field} /></FormControl>
-                    <FormDescription className="font-mono text-xs">Required to receive sensor signals.</FormDescription>
+                    <FormLabel>KAOS+ Raid Key</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder={clan.hasRaidKey ? "Key saved — enter a new one to replace it" : "Enter your raid key"}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>Required to receive raid alerts from KAOS+.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )} />
 
                 <FormField control={form.control} name="discordServerId" render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-mono text-xs uppercase tracking-widest">Discord Server ID</FormLabel>
-                    <FormControl><Input className="font-mono" placeholder="1234567890" {...field} /></FormControl>
-                    <FormDescription className="font-mono text-xs">The ID of the server where the bot resides.</FormDescription>
+                    <FormLabel>Discord Server ID</FormLabel>
+                    <FormControl><Input placeholder="1234567890" {...field} /></FormControl>
+                    <FormDescription>The ID of the Discord server where alerts get posted.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -158,10 +167,10 @@ export default function ClanSettings({ id }: { id: number }) {
                 {clan.discordServerId && channels && channels.length > 0 && (
                   <FormField control={form.control} name="discordChannelId" render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-mono text-xs uppercase tracking-widest">Target Channel</FormLabel>
+                      <FormLabel>Alert Channel</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger className="font-mono rounded-none"><SelectValue placeholder="Select channel" /></SelectTrigger>
+                          <SelectTrigger className="font-mono rounded-none"><SelectValue placeholder="Select a channel" /></SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {channels.map(ch => <SelectItem key={ch.id} value={ch.id} className="font-mono">#{ch.name}</SelectItem>)}
@@ -175,10 +184,10 @@ export default function ClanSettings({ id }: { id: number }) {
                 {clan.discordServerId && roles && roles.length > 0 && (
                   <FormField control={form.control} name="pingRole" render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-mono text-xs uppercase tracking-widest">Alert Role ID (Optional)</FormLabel>
+                      <FormLabel>Ping Role (Optional)</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger className="font-mono rounded-none"><SelectValue placeholder="No specific role" /></SelectTrigger>
+                          <SelectTrigger className="font-mono rounded-none"><SelectValue placeholder="No role ping" /></SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="none" className="font-mono">No role ping</SelectItem>
@@ -189,13 +198,12 @@ export default function ClanSettings({ id }: { id: number }) {
                     </FormItem>
                   )} />
                 )}
-
               </CardContent>
             </Card>
 
-            <Button type="submit" disabled={updateClan.isPending} className="w-full">
+            <Button type="submit" disabled={updateClan.isPending} className="w-full" size="lg">
               {updateClan.isPending ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}
-              SAVE CONFIGURATION
+              Save Settings
             </Button>
           </form>
         </Form>
@@ -204,7 +212,7 @@ export default function ClanSettings({ id }: { id: number }) {
         {clan.isPrivate && joinRequests && joinRequests.length > 0 && (
           <Card className="border-primary/30">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /> Pending Clearances</CardTitle>
+              <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /> Join Requests</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {joinRequests.map(req => (
@@ -212,18 +220,18 @@ export default function ClanSettings({ id }: { id: number }) {
                   <div className="flex items-center gap-3">
                     <Avatar className="h-8 w-8 rounded-none">
                       <AvatarImage src={req.avatar || undefined} alt={`${req.username}'s avatar`} />
-                      <AvatarFallback className="rounded-none bg-accent">{req.username.substring(0,2).toUpperCase()}</AvatarFallback>
+                      <AvatarFallback className="rounded-none bg-accent">{req.username.substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div>
                       <div className="font-bold text-sm">{req.username}</div>
-                      <div className="text-[10px] font-mono text-muted-foreground uppercase">{formatDistanceToNow(new Date(req.createdAt))} ago</div>
+                      <div className="text-[10px] font-mono text-muted-foreground">{formatDistanceToNow(new Date(req.createdAt))} ago</div>
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="icon" variant="outline" aria-label={`Approve ${req.username}'s join request`} className="h-8 w-8 text-primary border-primary/50 hover:bg-primary/10" onClick={() => handleResolveRequest(req.id, 'approve')}>
+                    <Button size="icon" variant="outline" aria-label={`Approve ${req.username}`} className="h-8 w-8 text-primary border-primary/50 hover:bg-primary/10" onClick={() => handleResolveRequest(req.id, 'approve')}>
                       <Check className="h-4 w-4" aria-hidden="true" />
                     </Button>
-                    <Button size="icon" variant="outline" aria-label={`Reject ${req.username}'s join request`} className="h-8 w-8 text-destructive border-destructive/50 hover:bg-destructive/10" onClick={() => handleResolveRequest(req.id, 'reject')}>
+                    <Button size="icon" variant="outline" aria-label={`Reject ${req.username}`} className="h-8 w-8 text-destructive border-destructive/50 hover:bg-destructive/10" onClick={() => handleResolveRequest(req.id, 'reject')}>
                       <X className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   </div>
@@ -239,9 +247,9 @@ export default function ClanSettings({ id }: { id: number }) {
             <CardTitle className="text-destructive flex items-center gap-2"><Trash2 className="h-5 w-5" /> Danger Zone</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="font-mono text-sm mb-4">Decommissioning this unit will sever all sensor links and purge records. This action is irreversible.</p>
+            <p className="font-mono text-sm mb-4">Deleting this clan is permanent and cannot be undone. All alerts and member data will be lost.</p>
             <Button variant="destructive" onClick={handleDelete} disabled={deleteClan.isPending}>
-              DECOMMISSION DIVISION
+              Delete Clan
             </Button>
           </CardContent>
         </Card>

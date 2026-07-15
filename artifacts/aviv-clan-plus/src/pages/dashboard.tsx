@@ -1,8 +1,8 @@
 import { useGetDashboard, useResolveJoinRequest, getGetDashboardQueryKey } from '@workspace/api-client-react';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
-import { Loader2, RadioReceiver, ShieldAlert, Check, X, AlertTriangle, Activity } from 'lucide-react';
+import { Loader2, Users, Bell, Activity, AlertTriangle, Plus, Search, Check, X, Clock } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -35,26 +35,26 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-display font-bold tracking-widest uppercase mb-2">Command Center</h1>
-        <p className="text-muted-foreground font-mono">Overview of your network and recent intel.</p>
+        <h1 className="text-3xl font-display font-bold tracking-widest uppercase mb-2">Dashboard</h1>
+        <p className="text-muted-foreground font-mono">Your clans and recent activity.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="bg-primary/10 border-primary/30">
           <CardHeader className="pb-2">
-            <CardTitle className="text-primary flex items-center gap-2">
-              <ShieldAlert className="h-5 w-5" /> Active Clans
+            <CardTitle className="text-primary flex items-center gap-2 text-base">
+              <Users className="h-5 w-5" /> My Clans
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-display font-bold">{dashboard.totalClans}</div>
           </CardContent>
         </Card>
-        
+
         <Card className="bg-card">
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2">
-              <RadioReceiver className="h-5 w-5 text-amber-500" /> Total Intel Received
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Bell className="h-5 w-5 text-amber-500" /> Raid Alerts
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -64,8 +64,8 @@ export default function Dashboard() {
 
         <Card className="bg-card">
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-blue-500" /> Pending Actions
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Activity className="h-5 w-5 text-blue-500" /> Join Requests
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -78,20 +78,21 @@ export default function Dashboard() {
         {/* Activity Feed */}
         <div className="space-y-4">
           <h2 className="text-xl font-display font-bold tracking-widest flex items-center gap-2 uppercase">
-            <AlertTriangle className="h-5 w-5 text-primary" /> Recent Intel
+            <AlertTriangle className="h-5 w-5 text-primary" /> Recent Alerts
           </h2>
-          
+
           <div className="space-y-3">
             {dashboard.recentAlerts.length === 0 ? (
               <div className="p-8 text-center border border-border border-dashed bg-card/50 text-muted-foreground font-mono text-sm">
-                No recent activity recorded.
+                No alerts yet.
               </div>
             ) : (
               dashboard.recentAlerts.map(alert => (
                 <div key={alert.id} className={`p-4 border clip-edges flex flex-col gap-2 ${alert.isTest ? 'bg-secondary/50 border-border' : 'bg-primary/5 border-primary/30'}`}>
-                  <div className="flex justify-between items-start">
+                  <div className="flex justify-between items-start gap-2">
                     <span className="font-mono text-xs tracking-widest text-muted-foreground uppercase">{alert.clanName}</span>
-                    <span className="font-mono text-[10px] text-muted-foreground">
+                    <span className="font-mono text-[10px] text-muted-foreground flex items-center gap-1 shrink-0">
+                      <Clock className="h-3 w-3" />
                       {formatDistanceToNow(new Date(alert.createdAt), { addSuffix: true })}
                     </span>
                   </div>
@@ -103,23 +104,21 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Dashboard actions / My Clans */}
+        {/* Quick Actions */}
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-display font-bold tracking-widest uppercase">Quick Actions</h2>
-          </div>
-          
+          <h2 className="text-xl font-display font-bold tracking-widest uppercase">Quick Actions</h2>
+
           <div className="grid grid-cols-2 gap-4">
             <Button asChild variant="outline" className="h-24 flex flex-col items-center justify-center gap-2">
               <Link href="/clans/create">
-                <ShieldAlert className="h-6 w-6" />
-                <span>Establish Clan</span>
+                <Plus className="h-6 w-6" />
+                <span>Create Clan</span>
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-24 flex flex-col items-center justify-center gap-2">
               <Link href="/search">
                 <Search className="h-6 w-6" />
-                <span>Search Network</span>
+                <span>Find Clans</span>
               </Link>
             </Button>
           </div>
@@ -128,6 +127,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
-// Ensure Search is imported for the icon above
-import { Search } from 'lucide-react';

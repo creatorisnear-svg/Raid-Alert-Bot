@@ -1,6 +1,6 @@
 import { useGetMe } from '@workspace/api-client-react';
 import { Link, useLocation } from 'wouter';
-import { Loader2, Crosshair, Users, Search, Menu, LogOut, ChevronRight } from 'lucide-react';
+import { Loader2, LayoutDashboard, Users, Search, Menu, LogOut, ChevronRight, Plus } from 'lucide-react';
 import logoUrl from '@/assets/logo.png';
 import { Button } from './ui/button';
 import { useLogout } from '@workspace/api-client-react';
@@ -43,16 +43,16 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const NavItems = () => (
     <>
       <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-none transition-colors ${location === '/dashboard' ? 'bg-primary/10 text-primary border-l-2 border-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground border-l-2 border-transparent'}`}>
-        <Crosshair className="h-5 w-5" />
-        <span className="font-display text-sm tracking-widest mt-1">Command</span>
+        <LayoutDashboard className="h-5 w-5" />
+        <span className="font-display text-sm tracking-widest mt-1">Dashboard</span>
       </Link>
       <Link href="/search" onClick={() => setMobileMenuOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-none transition-colors ${location === '/search' ? 'bg-primary/10 text-primary border-l-2 border-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground border-l-2 border-transparent'}`}>
         <Search className="h-5 w-5" />
-        <span className="font-display text-sm tracking-widest mt-1">Network</span>
+        <span className="font-display text-sm tracking-widest mt-1">Find Clans</span>
       </Link>
       <Link href="/clans/create" onClick={() => setMobileMenuOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-none transition-colors ${location === '/clans/create' ? 'bg-primary/10 text-primary border-l-2 border-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground border-l-2 border-transparent'}`}>
-        <Users className="h-5 w-5" />
-        <span className="font-display text-sm tracking-widest mt-1">Establish</span>
+        <Plus className="h-5 w-5" />
+        <span className="font-display text-sm tracking-widest mt-1">New Clan</span>
       </Link>
     </>
   );
