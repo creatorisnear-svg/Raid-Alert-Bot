@@ -31,7 +31,7 @@ export default function SearchClans() {
       onSuccess: () => {
         toast({
           title: "Request Transmitted",
-          description: `Clearance requested for ${name}.`,
+          description: `Join request sent for ${name}.`,
         });
       },
       onError: (err) => {
@@ -76,7 +76,7 @@ export default function SearchClans() {
                   <div className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <Avatar className="h-12 w-12 rounded-none border border-border">
-                        <AvatarImage src={clan.imageUrl || undefined} alt={`${clan.name} emblem`} />
+                        <AvatarImage src={clan.imageUrl || undefined} alt={`${clan.name} logo`} />
                         <AvatarFallback className="bg-accent font-display rounded-none text-accent-foreground">
                           {clan.name.substring(0, 2).toUpperCase()}
                         </AvatarFallback>

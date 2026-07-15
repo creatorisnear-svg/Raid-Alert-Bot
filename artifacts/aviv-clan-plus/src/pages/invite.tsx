@@ -29,11 +29,11 @@ export default function InviteJoin({ token }: { token: string }) {
 
     joinClan.mutate({ token }, {
       onSuccess: () => {
-        toast({ title: 'Clearance Granted', description: `You have joined ${invite.name}.` });
+        toast({ title: 'Joined!', description: `You are now a member of ${invite.name}.` });
         setLocation(`/clans/${invite.clanId}`);
       },
       onError: (err) => {
-        toast({ title: 'Access Denied', description: err.error || 'Failed to join.', variant: 'destructive' });
+        toast({ title: 'Could not join', description: err.error || 'Failed to join.', variant: 'destructive' });
       },
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -48,11 +48,11 @@ export default function InviteJoin({ token }: { token: string }) {
     }
     joinClan.mutate({ token }, {
       onSuccess: () => {
-        toast({ title: 'Clearance Granted', description: `You have joined ${invite.name}.` });
+        toast({ title: 'Joined!', description: `You are now a member of ${invite.name}.` });
         setLocation(`/clans/${invite.clanId}`);
       },
       onError: (err) => {
-        toast({ title: 'Access Denied', description: err.error || 'Failed to join.', variant: 'destructive' });
+        toast({ title: 'Could not join', description: err.error || 'Failed to join.', variant: 'destructive' });
       },
     });
   };
@@ -74,7 +74,7 @@ export default function InviteJoin({ token }: { token: string }) {
             <h2 className="font-display text-xl uppercase tracking-widest mb-2">Invalid Code</h2>
             <p className="font-mono text-sm text-muted-foreground mb-6">This access token has expired or does not exist.</p>
             <Button asChild variant="outline">
-              <a href="/">Return to Base</a>
+              <a href="/">Go Home</a>
             </Button>
           </CardContent>
         </Card>
@@ -95,16 +95,16 @@ export default function InviteJoin({ token }: { token: string }) {
       <Card className="max-w-md w-full relative z-10 border-primary/30 shadow-xl shadow-primary/5">
         <CardHeader className="text-center pb-0 pt-8">
           <Avatar className="h-24 w-24 mx-auto mb-4 rounded-none border-2 border-border">
-            <AvatarImage src={invite.imageUrl || undefined} alt={`${invite.name} emblem`} />
+            <AvatarImage src={invite.imageUrl || undefined} alt={`${invite.name} logo`} />
             <AvatarFallback className="rounded-none bg-accent font-display text-2xl">{invite.name.substring(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
-          <div className="text-xs font-mono tracking-widest text-primary mb-1 uppercase">Clearance Request</div>
+          <div className="text-xs font-mono tracking-widest text-primary mb-1 uppercase">Clan Invite</div>
           <CardTitle className="font-display text-3xl tracking-widest uppercase">{invite.name}</CardTitle>
         </CardHeader>
         <CardContent className="p-8 text-center flex flex-col items-center">
           <div className="flex items-center justify-center gap-6 mb-8 font-mono text-sm text-muted-foreground uppercase w-full border-y border-border py-3">
-            <span className="flex flex-col items-center"><Users className="h-4 w-4 mb-1" /> {invite.memberCount} Operatives</span>
-            <span className="flex flex-col items-center"><ShieldAlert className="h-4 w-4 mb-1" /> Cmdr {invite.leaderUsername}</span>
+            <span className="flex flex-col items-center"><Users className="h-4 w-4 mb-1" /> {invite.memberCount} Members</span>
+            <span className="flex flex-col items-center"><ShieldAlert className="h-4 w-4 mb-1" /> Leader: {invite.leaderUsername}</span>
           </div>
 
           {isAuthed ? (
@@ -112,7 +112,7 @@ export default function InviteJoin({ token }: { token: string }) {
               {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : (
                 <>
                   <LogIn className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-                  ACCEPT ASSIGNMENT
+                  JOIN CLAN
                 </>
               )}
             </Button>
