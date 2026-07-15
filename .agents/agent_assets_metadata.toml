@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "A4nV_2seinZcANGXk1KNf"
+uri = "file://artifacts/aviv-clan-plus/src/assets/logo.png"
+type = "image"
+title = "AVIV Clan+ Logo"
