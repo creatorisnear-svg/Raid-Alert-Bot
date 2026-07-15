@@ -1,11 +1,17 @@
-# AVIV Clan+ — API Server
+# AVIV Clan+ — API Server + Website (combined Koyeb service)
 
 Express + Drizzle backend for AVIV Clan+ (Discord OAuth login, clan CRUD,
-join requests, raid-alert relay to Discord, web push).
+join requests, raid-alert relay to Discord, web push). In production this
+same service also serves the built `aviv-clan-plus` website as static files
+— it's **one Koyeb service**, not two.
 
-Runs in this Replit workspace for development only (`pnpm --filter
-@workspace/api-server run dev`). **Production runs on Koyeb**, alongside
-`raid-alert-bot` and the `aviv-clan-plus` frontend — see the "Deployment
+In this Replit workspace, the API (`pnpm --filter @workspace/api-server run
+dev`) and the website (`pnpm --filter @workspace/aviv-clan-plus run dev`)
+still run as two separate dev workflows — that split is only for local
+development convenience (fast Vite HMR for the frontend). Production
+collapses them into one process; see `STATIC_DIR` handling in `src/app.ts`.
+
+Production runs on Koyeb, alongside `raid-alert-bot` — see the "Deployment
 target: Koyeb" section in the repo's top-level `replit.md` for why.
 
 ## Deploying to Koyeb
@@ -20,11 +26,18 @@ target: Koyeb" section in the repo's top-level `replit.md` for why.
 3. In Koyeb: create a Service → Docker → point it at this GitHub repo.
    - **Dockerfile location:** `artifacts/api-server/Dockerfile`
    - **Build context / work directory:** repo root (the Dockerfile needs
-     sibling workspace packages `@workspace/db` and `@workspace/api-zod`).
+     sibling workspace packages under `lib/` and the `aviv-clan-plus`
+     frontend source — it builds both the API and the website into this one
+     image).
 4. Set the runtime environment variables from `.env.example` in Koyeb's
-   dashboard. Koyeb provides `$PORT` automatically.
+   dashboard. Koyeb provides `$PORT` automatically; the Dockerfile already
+   sets `STATIC_DIR` so the server serves the website too.
 5. Set the health check path to `/api/healthz`.
-6. Deploy. Once you have the service's public URL, put it back into
-   `DISCORD_CLIENT_ID`'s app config as the OAuth redirect
-   (`<this service's URL>/api/auth/discord/callback`) and into the
-   `aviv-clan-plus` frontend's `VITE_API_URL` build var.
+6. Deploy. Once you have the service's public URL (e.g.
+   `https://aviv-clan-plus.koyeb.app`):
+   - Set `APP_URL` to that same URL in this service's env vars and redeploy.
+   - Add `<that URL>/api/auth/discord/callback` as a redirect URI in the
+     Discord Developer Portal.
+   - Visiting that URL in a browser now serves the website, and
+     `<that URL>/api/...` serves the API — same origin, no CORS/cross-domain
+     configuration needed in production.

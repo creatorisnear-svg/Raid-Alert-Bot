@@ -254,25 +254,44 @@ write code, run the dev workflows for live preview, and provision Replit's
 dev Postgres for local iteration — then hand off to Koyeb for anything that
 needs to run continuously in production.
 
+**AVIV Clan+ deploys to Koyeb as ONE service, not two** — the user explicitly
+asked for a single service rather than separate frontend/backend services.
+`artifacts/api-server/Dockerfile` builds both the API and the
+`aviv-clan-plus` website and bundles them into one image; one Koyeb service,
+one URL, one process. There is no `artifacts/aviv-clan-plus/Dockerfile` —
+don't recreate one. Redoing this as two services would need a redirect/CORS
+setup that the user does not want.
+
 What's already in place for Koyeb deployment (as of 2026-07-15):
 - `raid-alert-bot/Dockerfile` — already deployed by the user (pre-existing,
   unchanged by this pass).
-- `artifacts/api-server/Dockerfile` and `artifacts/aviv-clan-plus/Dockerfile`
-  — added so both can be deployed the same way. **Build context for both
-  must be the monorepo root** (not the artifact subdirectory), because they
-  depend on workspace packages (`@workspace/db`, `@workspace/api-zod`,
-  `@workspace/api-client-react`). Set "Dockerfile location" in Koyeb to the
-  artifact's `Dockerfile` path but leave the build context/work directory at
-  repo root.
-- `.env.example` in each of those two artifact directories lists the exact
-  env vars Koyeb needs and where to get them (Discord app credentials,
-  session secret, database URL, public API URL). `aviv-clan-plus`'s vars are
-  **build-time** (Vite inlines them), `api-server`'s are runtime.
-- The frontend's API client now supports a configurable base URL
-  (`VITE_API_URL` → `setBaseUrl()` in `src/main.tsx`) since on Koyeb the
-  frontend and API are separate services on separate domains, unlike Replit
-  where they share one domain via path routing (`BASE_PATH` must be `/` for
-  the standalone Koyeb build, vs. the artifact-specific prefix on Replit).
+- `artifacts/api-server/Dockerfile` — a multi-stage build: builds the
+  frontend (`aviv-clan-plus`, `BASE_PATH=/`, no separate API URL needed
+  since it's same-origin) and the backend (esbuild bundle) in one image,
+  final image runs `node dist/index.mjs` which serves `/api/*` routes AND
+  the built frontend + SPA fallback (`express.static` + catch-all, gated on
+  the `STATIC_DIR` env var in `src/app.ts` — unset in the Replit dev
+  workflow, so dev behavior is unaffected; set to `/app/public` in the
+  Dockerfile for the Koyeb image). **Build context must be the monorepo
+  root** (not the artifact subdirectory), because it depends on workspace
+  packages (`@workspace/db`, `@workspace/api-zod`,
+  `@workspace/api-client-react`) and pulls in the `aviv-clan-plus` source
+  tree directly. Set "Dockerfile location" in Koyeb to
+  `artifacts/api-server/Dockerfile` but leave the build context/work
+  directory at repo root. Verified end-to-end with a local `docker build` +
+  `docker run` against the real dev database: `/`, `/terms` (SPA deep
+  link), `/api/healthz`, and a built JS asset all returned 200 from one
+  container.
+- `artifacts/api-server/.env.example` lists the exact runtime env vars
+  Koyeb needs and where to get them (Discord app credentials, session
+  secret, database URL, `APP_URL` — now the one public URL for the whole
+  site+API). No separate `.env.example` for `aviv-clan-plus` since it isn't
+  deployed independently.
+- The frontend's API client still supports an optional configurable base
+  URL (`VITE_API_URL` → `setBaseUrl()` in `src/main.tsx`), left in place as
+  a no-op fallback in case the services are ever split again later, but it
+  is NOT used in the current single-service Koyeb build (relative
+  `/api/...` calls just work since everything is same-origin).
 - **Database**: Replit's built-in dev Postgres (`DATABASE_URL` pointing at
   host `helium`) is only reachable from inside the Replit workspace — it
   will NOT work as the production database from Koyeb. The user needs a
