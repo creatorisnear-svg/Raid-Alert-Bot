@@ -95,7 +95,7 @@ export default function Home() {
               <Zap className="h-10 w-10 text-primary mb-6" />
               <h3 className="font-display text-xl mb-3 tracking-widest">Instant Alerts</h3>
               <p className="font-mono text-sm text-muted-foreground leading-relaxed">
-                Your clan gets notified the moment a sensor trips — no delays, no missed raids.
+                Your clan gets notified the moment a sensor trips. No delays, no missed raids.
               </p>
             </div>
 
