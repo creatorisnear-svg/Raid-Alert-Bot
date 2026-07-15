@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'wouter';
-import { Loader2, Settings, Users, Bell, Activity, Clock, BellRing, BellOff, FlaskConical, Download } from 'lucide-react';
+import { Loader2, Settings, Users, Bell, Activity, Clock, BellRing, BellOff, FlaskConical, Download, X, Trash2 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { useRaidSiren } from '@/hooks/use-raid-siren';
 import { useInstallPrompt } from '@/hooks/use-install-prompt';
@@ -21,6 +21,10 @@ export default function ClanDetail({ id }: { id: number }) {
   const sendTestAlert = useSendTestAlert();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  const [dismissedIds, setDismissedIds] = useState<Set<number>>(new Set());
+  const dismissAlert = (alertId: number) => setDismissedIds(prev => new Set(prev).add(alertId));
+  const clearAllAlerts = () => setDismissedIds(new Set((alerts ?? []).map(a => a.id)));
 
   const isLoading = clanLoading || membersLoading || alertsLoading;
 
@@ -152,7 +156,12 @@ export default function ClanDetail({ id }: { id: number }) {
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center gap-2 border-b border-border pb-2">
             <Activity className="h-5 w-5 text-primary" />
-            <h2 className="font-display text-xl font-bold tracking-widest uppercase">Raid Alerts</h2>
+            <h2 className="font-display text-xl font-bold tracking-widest uppercase flex-1">Raid Alerts</h2>
+            {alerts && alerts.length > 0 && dismissedIds.size < alerts.length && (
+              <Button variant="ghost" size="sm" className="font-mono text-xs text-muted-foreground hover:text-foreground h-7 px-2" onClick={clearAllAlerts}>
+                <Trash2 className="h-3 w-3 mr-1" /> Clear all
+              </Button>
+            )}
           </div>
 
           {!isMember ? (
@@ -160,13 +169,13 @@ export default function ClanDetail({ id }: { id: number }) {
               <Bell className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
               <p className="font-mono text-sm text-muted-foreground">Join this clan to see raid alerts.</p>
             </div>
-          ) : !alerts || alerts.length === 0 ? (
+          ) : !alerts || alerts.filter(a => !dismissedIds.has(a.id)).length === 0 ? (
             <div className="p-8 text-center border border-border bg-card/50">
               <p className="font-mono text-sm text-muted-foreground">No alerts yet.</p>
             </div>
           ) : (
             <div className="space-y-4">
-              {alerts.map(alert => (
+              {alerts.filter(a => !dismissedIds.has(a.id)).map(alert => (
                 <Card key={alert.id} className={`bg-background border-l-4 ${alert.isTest ? 'border-l-secondary' : 'border-l-primary'}`}>
                   <CardContent className="p-4 flex flex-col gap-2">
                     <div className="flex justify-between items-start">
@@ -175,9 +184,14 @@ export default function ClanDetail({ id }: { id: number }) {
                           {alert.isTest ? 'Test Alert' : 'Raid Alert'}
                         </span>
                       </div>
-                      <span className="font-mono text-[10px] text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-3 w-3" /> {format(new Date(alert.createdAt), 'HH:mm:ss')}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-[10px] text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-3 w-3" /> {format(new Date(alert.createdAt), 'HH:mm:ss')}
+                        </span>
+                        <button onClick={() => dismissAlert(alert.id)} className="text-muted-foreground hover:text-foreground transition-colors ml-1" aria-label="Dismiss">
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </div>
                     <h3 className="font-bold text-lg">{alert.title}</h3>
                     <p className="font-mono text-sm text-muted-foreground">{alert.body}</p>
