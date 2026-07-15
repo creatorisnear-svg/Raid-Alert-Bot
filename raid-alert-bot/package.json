@@ -1,0 +1,23 @@
+{
+  "name": "raid-alert-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Listens for KAOS+ raid alerts via a headless Google push subscription and reposts them to Discord.",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "@eneris/push-receiver": "^4.3.1",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^24.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.0"
+  }
+}
