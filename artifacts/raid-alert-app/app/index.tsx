@@ -1,18 +1,11 @@
 /**
- * TCK Raid Alerts — main screen.
- *
- * Design concept: "Tactical HUD" — dark military readout with a glowing
- * animated siren icon, real-time status bar, and a log-style alert feed.
- *
- * Animations:
- *   • Pulsing ring around the icon when alerts are armed
- *   • Blinking status dot
- *   • FadeInDown entry for each alert card
+ * AVIV Raid Alerts — main screen.
  */
 
 import React, { useEffect, useRef, useState } from 'react';
 import {
   FlatList,
+  Image,
   Platform,
   Pressable,
   StatusBar,
@@ -36,10 +29,12 @@ import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 
+const avivLogo = require('../assets/images/aviv-logo.png') as number;
+
 // ─── Config ──────────────────────────────────────────────────────────────────
 const BOT_URL = (process.env.EXPO_PUBLIC_BOT_URL ?? '').replace(/\/$/, '');
 
-// ─── Palette ─────────────────────────────────────────────────────────────────
+// ─── Palette — AVIV brand orange on dark ─────────────────────────────────────
 const C = {
   bg:          '#080b08',
   bgMid:       '#0e130e',
@@ -47,11 +42,10 @@ const C = {
   surface2:    '#172017',
   border:      '#1c2c1c',
   borderBright:'#2a3e2a',
-  accent:      '#c0392b',
-  accentGlow:  'rgba(192,57,43,0.20)',
-  accentRing:  'rgba(192,57,43,0.12)',
-  armed:       '#27ae60',
-  armedGlow:   'rgba(39,174,96,0.18)',
+  accent:      '#e8430a',          // AVIV orange-red
+  accentGlow:  'rgba(232,67,10,0.18)',
+  active:      '#27ae60',
+  activeGlow:  'rgba(39,174,96,0.18)',
   amber:       '#e67e22',
   text:        '#cdd8cd',
   textDim:     '#8aaa8a',
@@ -60,10 +54,9 @@ const C = {
 };
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-type Status   = 'idle' | 'loading' | 'subscribed' | 'error';
+type Status    = 'idle' | 'loading' | 'subscribed' | 'error';
 type AlertItem = { id: string; title: string; body: string; time: Date };
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 function fmtTime(d: Date) {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
@@ -80,12 +73,12 @@ function PulseRing({ active }: { active: boolean }) {
         -1, false,
       );
       opacity.value = withRepeat(
-        withSequence(withTiming(0, { duration: 1200 }), withTiming(0.55, { duration: 0 })),
+        withSequence(withTiming(0, { duration: 1200 }), withTiming(0.5, { duration: 0 })),
         -1, false,
       );
     } else {
-      scale.value   = withTiming(1,   { duration: 400 });
-      opacity.value = withTiming(0,   { duration: 400 });
+      scale.value   = withTiming(1, { duration: 400 });
+      opacity.value = withTiming(0, { duration: 400 });
     }
   }, [active]);
 
@@ -96,11 +89,7 @@ function PulseRing({ active }: { active: boolean }) {
 
   return (
     <Animated.View
-      style={[
-        StyleSheet.absoluteFill,
-        { borderRadius: 999, borderWidth: 2, borderColor: C.accent },
-        style,
-      ]}
+      style={[StyleSheet.absoluteFill, { borderRadius: 999, borderWidth: 2, borderColor: C.accent }, style]}
     />
   );
 }
@@ -115,24 +104,21 @@ function BlinkDot({ color }: { color: string }) {
     );
   }, []);
   const style = useAnimatedStyle(() => ({ opacity: opacity.value }));
-  return (
-    <Animated.View style={[styles.blink, { backgroundColor: color }, style]} />
-  );
+  return <Animated.View style={[styles.blink, { backgroundColor: color }, style]} />;
 }
 
-// ─── Main screen ─────────────────────────────────────────────────────────────
+// ─── Screen ───────────────────────────────────────────────────────────────────
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
 
-  const [status,   setStatus]   = useState<Status>('idle');
-  const [alerts,   setAlerts]   = useState<AlertItem[]>([]);
-  const [errorMsg, setError]    = useState('');
-  const [bootTime]              = useState(() => new Date());
+  const [status,   setStatus]  = useState<Status>('idle');
+  const [alerts,   setAlerts]  = useState<AlertItem[]>([]);
+  const [errorMsg, setError]   = useState('');
+  const [bootTime]             = useState(() => new Date());
 
   const notifRef    = useRef<Notifications.EventSubscription | null>(null);
   const responseRef = useRef<Notifications.EventSubscription | null>(null);
 
-  // ── Lifecycle ──────────────────────────────────────────────────────────────
   useEffect(() => {
     createAndroidChannel();
 
@@ -169,7 +155,6 @@ export default function HomeScreen() {
     return t.data;
   }
 
-  // ── Enable ─────────────────────────────────────────────────────────────────
   async function enableAlerts() {
     setStatus('loading');
     setError('');
@@ -186,7 +171,7 @@ export default function HomeScreen() {
         return;
       }
       if (!BOT_URL) {
-        setError('EXPO_PUBLIC_BOT_URL not configured — see .env.example.');
+        setError('Bot URL not configured — see .env.example.');
         setStatus('error');
         return;
       }
@@ -200,12 +185,11 @@ export default function HomeScreen() {
       setStatus('subscribed');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to enable alerts.');
+      setError(err instanceof Error ? err.message : 'Something went wrong.');
       setStatus('error');
     }
   }
 
-  // ── Disable ────────────────────────────────────────────────────────────────
   async function disableAlerts() {
     setStatus('loading');
     try {
@@ -227,107 +211,92 @@ export default function HomeScreen() {
     ]);
   }
 
-  // ── Derived ────────────────────────────────────────────────────────────────
-  const isArmed   = status === 'subscribed';
+  // ── Derived UI state ──────────────────────────────────────────────────────
+  const isActive  = status === 'subscribed';
   const isLoading = status === 'loading';
   const isError   = status === 'error';
 
-  const modeLabel  = isArmed ? 'ARMED' : isError ? 'FAULT' : isLoading ? 'INIT' : 'STANDBY';
-  const modeColor  = isArmed ? C.armed : isError ? C.accent : isLoading ? C.amber : C.textDim;
-  const statusLine = isArmed
-    ? 'Monitoring · siren will play on raid'
-    : isLoading ? 'Establishing uplink…'
-    : isError   ? (errorMsg || 'Uplink failed')
-    : 'Tap ENGAGE to subscribe to raid alerts';
+  const modeLabel = isActive ? 'Active' : isError ? 'Error' : isLoading ? 'Loading' : 'Inactive';
+  const modeColor = isActive ? C.active : isError ? C.accent : isLoading ? C.amber : C.textDim;
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  const statusLine =
+    isActive  ? 'Alerts on — siren will sound when a raid starts'
+    : isLoading ? 'Connecting…'
+    : isError   ? (errorMsg || 'Something went wrong')
+    : 'Tap Enable Alerts to get notified when a raid starts';
+
   return (
     <View style={[styles.root, { paddingBottom: Math.max(insets.bottom, 16) }]}>
       <StatusBar barStyle="light-content" backgroundColor={C.bg} />
 
-      {/* ── HERO ── */}
+      {/* ── HEADER ── */}
       <LinearGradient
-        colors={[isArmed ? '#130d0d' : '#0c0f0c', C.bg]}
+        colors={[isActive ? '#130d07' : '#0c0f0c', C.bg]}
         style={[styles.hero, { paddingTop: Math.max(insets.top + 16, 40) }]}
       >
-        {/* Corner marks */}
-        <View style={[styles.cornerMark, styles.cornerTL]} />
-        <View style={[styles.cornerMark, styles.cornerTR]} />
-
-        {/* Icon */}
-        <View style={styles.iconArea}>
-          <View style={[
-            styles.iconRing,
-            isArmed && { borderColor: C.accent, shadowColor: C.accent, shadowOpacity: 0.5, shadowRadius: 16, elevation: 8 },
-          ]}>
-            <PulseRing active={isArmed} />
-            <MaterialCommunityIcons
-              name="alarm-light"
-              size={52}
-              color={isArmed ? C.accent : C.textDim}
-            />
-          </View>
+        {/* Logo */}
+        <View style={[
+          styles.logoWrap,
+          isActive && { borderColor: C.accent, shadowColor: C.accent, shadowOpacity: 0.4, shadowRadius: 16, elevation: 8 },
+        ]}>
+          <PulseRing active={isActive} />
+          <Image source={avivLogo} style={styles.logoImg} resizeMode="contain" />
         </View>
 
-        {/* Title */}
-        <Text style={styles.title}>RAID ALERTS</Text>
-        <View style={styles.clanRow}>
-          <View style={styles.clanDash} />
-          <Text style={styles.clanLabel}>TCK CLAN</Text>
-          <View style={styles.clanDash} />
+        {/* Name */}
+        <Text style={styles.appName}>AVIV</Text>
+        <View style={styles.subtitleRow}>
+          <View style={styles.subtitleDash} />
+          <Text style={styles.subtitle}>RAID ALERTS</Text>
+          <View style={styles.subtitleDash} />
         </View>
 
-        {/* Mode badge */}
+        {/* Status badge */}
         <Animated.View
           entering={FadeIn}
-          style={[
-            styles.modeBadge,
-            { borderColor: modeColor, backgroundColor: `${modeColor}18` },
-          ]}
+          style={[styles.badge, { borderColor: modeColor, backgroundColor: `${modeColor}18` }]}
         >
           <BlinkDot color={modeColor} />
-          <Text style={[styles.modeText, { color: modeColor }]}>{modeLabel}</Text>
+          <Text style={[styles.badgeText, { color: modeColor }]}>{modeLabel}</Text>
         </Animated.View>
 
-        {/* Bottom rule */}
         <View style={styles.heroRule} />
       </LinearGradient>
 
-      {/* ── STATUS PANEL ── */}
-      <View style={[styles.statusPanel, isArmed && styles.statusPanelArmed]}>
+      {/* ── STATUS BAR ── */}
+      <View style={[styles.statusRow, isActive && styles.statusRowActive]}>
         <MaterialCommunityIcons
-          name={isArmed ? 'shield-check' : isError ? 'shield-alert' : 'shield-outline'}
+          name={isActive ? 'shield-check' : isError ? 'shield-alert' : 'shield-outline'}
           size={15}
           color={modeColor}
           style={{ marginRight: 7 }}
         />
-        <Text style={styles.statusText} numberOfLines={1}>{statusLine}</Text>
-        {isLoading && (
-          <Text style={[styles.statusMono, { color: C.amber }]}>…</Text>
-        )}
+        <Text style={styles.statusText} numberOfLines={2}>{statusLine}</Text>
       </View>
 
-      {/* ── ACTION BUTTON ── */}
+      {/* ── BUTTON ── */}
       <View style={styles.btnWrap}>
-        {!isArmed ? (
+        {!isActive ? (
           <Pressable
             onPress={enableAlerts}
             disabled={isLoading}
             style={({ pressed }) => [
               styles.btn,
-              styles.btnPrimary,
               isLoading && { opacity: 0.5 },
               pressed && { opacity: 0.85 },
             ]}
           >
             <LinearGradient
-              colors={['#9b2335', '#c0392b', '#8e1a26']}
+              colors={['#bf3a0a', '#e8430a', '#bf3a0a']}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-              style={styles.btnGradient}
+              style={styles.btnInner}
             >
-              <MaterialCommunityIcons name={isError ? 'refresh' : 'bell-ring'} size={18} color="#fff" />
+              <MaterialCommunityIcons
+                name={isError ? 'refresh' : 'bell-ring'}
+                size={18} color="#fff"
+              />
               <Text style={styles.btnLabel}>
-                {isLoading ? 'ESTABLISHING UPLINK…' : isError ? 'RETRY' : 'ENGAGE'}
+                {isLoading ? 'Connecting…' : isError ? 'Try Again' : 'Enable Alerts'}
               </Text>
               {!isLoading && (
                 <MaterialCommunityIcons name="chevron-right" size={18} color="rgba(255,255,255,0.5)" />
@@ -337,27 +306,27 @@ export default function HomeScreen() {
         ) : (
           <Pressable
             onPress={disableAlerts}
-            style={({ pressed }) => [styles.btn, styles.btnSecondary, pressed && { opacity: 0.7 }]}
+            style={({ pressed }) => [styles.btnOutline, pressed && { opacity: 0.7 }]}
           >
             <MaterialCommunityIcons name="bell-off-outline" size={16} color={C.textDim} />
-            <Text style={styles.btnLabelDim}>DISENGAGE</Text>
+            <Text style={styles.btnLabelDim}>Disable Alerts</Text>
           </Pressable>
         )}
       </View>
 
-      {/* ── INTERCEPT LOG ── */}
+      {/* ── RECENT ALERTS ── */}
       <View style={styles.logHeader}>
-        <Text style={styles.logTitle}>INTERCEPT LOG</Text>
+        <Text style={styles.logTitle}>RECENT ALERTS</Text>
         {alerts.length > 0 && (
           <View style={styles.logBadge}>
             <Text style={styles.logBadgeText}>{alerts.length}</Text>
           </View>
         )}
         <View style={{ flex: 1 }} />
-        <Text style={styles.logMeta}>SESS · {fmtTime(bootTime)}</Text>
+        <Text style={styles.logMeta}>{fmtTime(bootTime)}</Text>
       </View>
 
-      <View style={styles.logDivider} />
+      <View style={styles.divider} />
 
       <FlatList
         data={alerts}
@@ -367,16 +336,16 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <MaterialCommunityIcons name="radar" size={40} color={C.textFaint} />
-            <Text style={styles.emptyTitle}>NO INTERCEPTS</Text>
-            <Text style={styles.emptyBody}>Session is clean</Text>
+            <MaterialCommunityIcons name="shield-check-outline" size={40} color={C.textFaint} />
+            <Text style={styles.emptyTitle}>No alerts yet</Text>
+            <Text style={styles.emptyBody}>You'll see raids here when they happen</Text>
           </View>
         }
         renderItem={({ item, index }) => (
           <Animated.View entering={FadeInDown.delay(index * 40).duration(300)}>
             <View style={styles.alertCard}>
               <View style={styles.alertStripe} />
-              <View style={styles.alertBody}>
+              <View style={styles.alertContent}>
                 <View style={styles.alertTop}>
                   <Text style={styles.alertTitle}>{item.title}</Text>
                   <Text style={styles.alertTime}>{fmtTime(item.time)}</Text>
@@ -385,8 +354,8 @@ export default function HomeScreen() {
                   <Text style={styles.alertMsg} numberOfLines={2}>{item.body}</Text>
                 )}
               </View>
-              <View style={styles.alertBadgeWrap}>
-                <Text style={styles.alertBadge}>!</Text>
+              <View style={styles.alertExclaim}>
+                <Text style={styles.alertExclaimText}>!</Text>
               </View>
             </View>
           </Animated.View>
@@ -395,13 +364,14 @@ export default function HomeScreen() {
 
       {/* ── FOOTER ── */}
       <View style={styles.footer}>
-        <Text style={styles.footerText}>SENTINEL v1.0</Text>
-        <View style={styles.footerDot} />
-        <Text style={styles.footerText}>
-          {Platform.OS !== 'android' && Platform.OS !== 'ios'
-            ? 'WEB PREVIEW · SIREN REQUIRES APK BUILD'
-            : 'SIREN ACTIVE ON BUILD'}
-        </Text>
+        <Image source={avivLogo} style={styles.footerLogo} resizeMode="contain" />
+        <Text style={styles.footerText}>AVIV Raid Alerts</Text>
+        {Platform.OS !== 'android' && Platform.OS !== 'ios' && (
+          <>
+            <View style={styles.footerDot} />
+            <Text style={styles.footerText}>Web preview</Text>
+          </>
+        )}
       </View>
     </View>
   );
@@ -409,34 +379,12 @@ export default function HomeScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: C.bg,
-  },
+  root: { flex: 1, backgroundColor: C.bg },
 
-  // Hero
-  hero: {
-    alignItems: 'center',
-    paddingBottom: 0,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  cornerMark: {
-    position: 'absolute',
-    width: 16,
-    height: 16,
-    top: 56,
-    borderColor: C.borderBright,
-  },
-  cornerTL: { left: 20,  borderTopWidth: 1.5, borderLeftWidth: 1.5 },
-  cornerTR: { right: 20, borderTopWidth: 1.5, borderRightWidth: 1.5 },
+  // Header
+  hero: { alignItems: 'center', paddingBottom: 0, overflow: 'hidden' },
 
-  iconArea: {
-    marginBottom: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconRing: {
+  logoWrap: {
     width: 100,
     height: 100,
     borderRadius: 50,
@@ -445,69 +393,59 @@ const styles = StyleSheet.create({
     backgroundColor: C.surface,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 16,
     shadowColor: C.accent,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0,
     shadowRadius: 0,
     elevation: 0,
   },
+  logoImg: { width: 62, height: 62 },
 
-  title: {
-    fontSize: 26,
+  appName: {
+    fontSize: 28,
     fontWeight: '800',
     color: C.text,
     letterSpacing: 8,
     fontFamily: 'Inter_700Bold',
   },
-  clanRow: {
+  subtitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginTop: 5,
+    marginTop: 4,
     marginBottom: 14,
   },
-  clanDash: {
-    height: 1,
-    width: 24,
-    backgroundColor: C.borderBright,
-  },
-  clanLabel: {
+  subtitleDash: { height: 1, width: 20, backgroundColor: C.borderBright },
+  subtitle: {
     fontSize: 11,
     color: C.textDim,
     letterSpacing: 4,
     fontFamily: 'Inter_400Regular',
   },
 
-  modeBadge: {
+  badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: 8,
     borderWidth: 1,
     borderRadius: 4,
     paddingHorizontal: 14,
     paddingVertical: 6,
     marginBottom: 20,
   },
-  blink: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-  },
-  modeText: {
+  blink: { width: 7, height: 7, borderRadius: 3.5 },
+  badgeText: {
     fontSize: 12,
     fontWeight: '700',
-    letterSpacing: 3,
+    letterSpacing: 1,
     fontFamily: 'Inter_700Bold',
   },
 
-  heroRule: {
-    width: '100%',
-    height: 1,
-    backgroundColor: C.border,
-  },
+  heroRule: { width: '100%', height: 1, backgroundColor: C.border },
 
-  // Status panel
-  statusPanel: {
+  // Status
+  statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -516,9 +454,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: C.border,
   },
-  statusPanelArmed: {
-    borderBottomColor: `${C.armed}40`,
-  },
+  statusRowActive: { borderBottomColor: `${C.active}40` },
   statusText: {
     flex: 1,
     fontSize: 12,
@@ -526,37 +462,16 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     letterSpacing: 0.3,
   },
-  statusMono: {
-    fontSize: 13,
-    fontFamily: 'Inter_600SemiBold',
-    marginLeft: 6,
-  },
 
   // Buttons
   btnWrap: {
     paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 14,
-    backgroundColor: C.bg,
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: C.border,
   },
-  btn: {
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  btnPrimary: {},
-  btnSecondary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 13,
-    borderWidth: 1,
-    borderColor: C.borderBright,
-    borderRadius: 6,
-  },
-  btnGradient: {
+  btn: { borderRadius: 6, overflow: 'hidden' },
+  btnInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -567,20 +482,29 @@ const styles = StyleSheet.create({
   btnLabel: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     color: C.white,
-    letterSpacing: 2.5,
+    letterSpacing: 0.5,
     fontFamily: 'Inter_700Bold',
   },
+  btnOutline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 13,
+    borderWidth: 1,
+    borderColor: C.borderBright,
+    borderRadius: 6,
+  },
   btnLabelDim: {
-    fontSize: 12,
+    fontSize: 14,
     color: C.textDim,
-    letterSpacing: 2.5,
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Inter_400Regular',
   },
 
-  // Intercept log
+  // Alert list header
   logHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -604,32 +528,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 5,
   },
-  logBadgeText: {
-    fontSize: 10,
-    color: C.white,
-    fontFamily: 'Inter_700Bold',
-  },
+  logBadgeText: { fontSize: 10, color: C.white, fontFamily: 'Inter_700Bold' },
   logMeta: {
     fontSize: 9,
     color: C.textFaint,
     letterSpacing: 1,
     fontFamily: 'Inter_400Regular',
   },
-  logDivider: {
-    height: 1,
-    backgroundColor: C.border,
-    marginHorizontal: 16,
-  },
+  divider: { height: 1, backgroundColor: C.border, marginHorizontal: 16 },
 
-  // Alert list
-  list: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 10,
-  },
-  emptyWrap: {
-    flex: 1,
-  },
+  // List
+  list: { flex: 1, paddingHorizontal: 16, paddingTop: 10 },
+  emptyWrap: { flex: 1 },
   empty: {
     flex: 1,
     alignItems: 'center',
@@ -639,17 +549,16 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   emptyTitle: {
-    fontSize: 12,
+    fontSize: 14,
     color: C.textDim,
-    letterSpacing: 2.5,
     fontFamily: 'Inter_600SemiBold',
     marginTop: 4,
   },
   emptyBody: {
-    fontSize: 11,
+    fontSize: 12,
     color: C.textFaint,
     fontFamily: 'Inter_400Regular',
-    letterSpacing: 1,
+    textAlign: 'center',
   },
 
   // Alert card
@@ -662,32 +571,20 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     overflow: 'hidden',
   },
-  alertStripe: {
-    width: 3,
-    backgroundColor: C.accent,
-  },
-  alertBody: {
-    flex: 1,
-    padding: 11,
-  },
-  alertTop: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-  },
+  alertStripe: { width: 3, backgroundColor: C.accent },
+  alertContent: { flex: 1, padding: 11 },
+  alertTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   alertTitle: {
     flex: 1,
     fontSize: 13,
     fontWeight: '700',
     color: C.text,
     fontFamily: 'Inter_700Bold',
-    letterSpacing: 0.3,
   },
   alertTime: {
     fontSize: 10,
     color: C.textFaint,
     fontFamily: 'Inter_400Regular',
-    letterSpacing: 0.5,
     marginTop: 2,
     flexShrink: 0,
   },
@@ -698,13 +595,13 @@ const styles = StyleSheet.create({
     marginTop: 3,
     lineHeight: 17,
   },
-  alertBadgeWrap: {
+  alertExclaim: {
     width: 28,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: `${C.accent}18`,
   },
-  alertBadge: {
+  alertExclaimText: {
     fontSize: 14,
     fontWeight: '800',
     color: C.accent,
@@ -716,22 +613,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 6,
     paddingVertical: 10,
     borderTopWidth: 1,
     borderTopColor: C.border,
     marginHorizontal: 16,
   },
+  footerLogo: { width: 14, height: 14, opacity: 0.5 },
   footerText: {
     fontSize: 9,
     color: C.textFaint,
-    letterSpacing: 1.5,
+    letterSpacing: 0.5,
     fontFamily: 'Inter_400Regular',
   },
-  footerDot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: C.textFaint,
-  },
+  footerDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: C.textFaint },
 });
