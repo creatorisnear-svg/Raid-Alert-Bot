@@ -1,15 +1,19 @@
-import { useGetDashboard, useResolveJoinRequest, getGetDashboardQueryKey } from '@workspace/api-client-react';
+import { useGetDashboard, useResolveJoinRequest, getGetDashboardQueryKey, useListMyClans } from '@workspace/api-client-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Link } from 'wouter';
-import { Loader2, Users, Bell, Activity, AlertTriangle, Plus, Search, Check, X, Clock } from 'lucide-react';
+import { Link, useLocation } from 'wouter';
+import { Loader2, Users, Bell, Activity, AlertTriangle, Plus, Search, Check, X, Clock, ChevronRight, Settings } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 
 export default function Dashboard() {
   const { data: dashboard, isLoading } = useGetDashboard();
+  const { data: myClans, isLoading: clansLoading } = useListMyClans();
   const queryClient = useQueryClient();
   const resolveRequest = useResolveJoinRequest();
+  const [, navigate] = useLocation();
 
   if (isLoading) {
     return (
@@ -72,6 +76,76 @@ export default function Dashboard() {
             <div className="text-4xl font-display font-bold">{dashboard.pendingRequests}</div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* My Clans */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-display font-bold tracking-widest uppercase flex items-center gap-2">
+          <Users className="h-5 w-5 text-primary" /> My Clans
+        </h2>
+
+        {clansLoading ? (
+          <div className="flex items-center gap-2 text-muted-foreground font-mono text-sm p-4">
+            <Loader2 className="h-4 w-4 animate-spin" /> Loading clans...
+          </div>
+        ) : !myClans || myClans.length === 0 ? (
+          <div className="p-8 text-center border border-border border-dashed bg-card/50 text-muted-foreground font-mono text-sm">
+            You are not in any clans yet.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {myClans.map(clan => (
+              <div
+                key={clan.id}
+                role="link"
+                tabIndex={0}
+                className="flex items-center gap-4 p-4 border border-border bg-card hover:bg-accent/50 hover:border-primary/40 transition-colors cursor-pointer group"
+                onClick={() => navigate(`/clans/${clan.id}`)}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') navigate(`/clans/${clan.id}`); }}
+              >
+                <Avatar className="h-10 w-10 rounded-none shrink-0">
+                  <AvatarImage src={clan.imageUrl || undefined} alt={`${clan.name} image`} />
+                  <AvatarFallback className="rounded-none bg-accent font-display text-sm">{clan.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-bold tracking-wide">{clan.name}</span>
+                    <Badge variant={clan.role === 'leader' ? 'default' : 'secondary'} className="text-[10px] font-mono tracking-widest uppercase">
+                      {clan.role}
+                    </Badge>
+                    {!clan.discordConfigured && (
+                      <Badge variant="outline" className="text-[10px] font-mono tracking-widest text-amber-500 border-amber-500/40">Setup needed</Badge>
+                    )}
+                    {clan.pendingRequestCount > 0 && (
+                      <Badge variant="outline" className="text-[10px] font-mono tracking-widest text-primary border-primary/40">{clan.pendingRequestCount} pending</Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 mt-0.5 text-[11px] font-mono text-muted-foreground">
+                    <span className="flex items-center gap-1"><Users className="h-3 w-3" />{clan.memberCount}</span>
+                    <span className="flex items-center gap-1"><Bell className="h-3 w-3" />{clan.alertCount} alerts</span>
+                    {clan.lastAlertAt && (
+                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatDistanceToNow(new Date(clan.lastAlertAt), { addSuffix: true })}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {clan.role === 'leader' && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      aria-label="Clan settings"
+                      onClick={e => { e.stopPropagation(); navigate(`/clans/${clan.id}/settings`); }}
+                    >
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

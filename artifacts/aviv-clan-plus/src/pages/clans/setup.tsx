@@ -85,6 +85,12 @@ export default function ClanSetup({ id }: { id: number }) {
     if (clan?.pingRole && pingRole === 'everyone') setPingRole(clan.pingRole);
   }, [clan?.pingRole]);
 
+  // Redirect if already fully configured — must be after all hooks
+  const alreadyConfigured = !!(clan?.discordServerId && clan?.hasRaidKey);
+  useEffect(() => {
+    if (alreadyConfigured) setLocation(`/clans/${id}`);
+  }, [alreadyConfigured, id]);
+
   const handleFinish = () => {
     const updateData: Record<string, any> = {
       name: clan!.name,
@@ -114,12 +120,7 @@ export default function ClanSetup({ id }: { id: number }) {
   }
 
   if (!clan) return null;
-
-  // Already fully configured
-  if (clan.discordServerId && clan.hasRaidKey) {
-    setLocation(`/clans/${id}`);
-    return null;
-  }
+  if (alreadyConfigured) return null;
 
   return (
     <div className="max-w-2xl mx-auto mt-4 md:mt-8 pb-24 space-y-6">

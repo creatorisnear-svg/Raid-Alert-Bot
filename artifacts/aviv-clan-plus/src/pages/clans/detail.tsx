@@ -13,6 +13,7 @@ export default function ClanDetail({ id }: { id: number }) {
   const { data: clan, isLoading: clanLoading } = useGetClan(id, { query: { enabled: !!id } });
   const { data: members, isLoading: membersLoading } = useListClanMembers(id, { query: { enabled: !!id } });
   const { data: alerts, isLoading: alertsLoading } = useListAlerts(id, { query: { enabled: !!id } });
+  const siren = useRaidSiren(id);
 
   const isLoading = clanLoading || membersLoading || alertsLoading;
 
@@ -23,8 +24,6 @@ export default function ClanDetail({ id }: { id: number }) {
       </div>
     );
   }
-
-  const siren = useRaidSiren(id);
 
   if (!clan) return null;
 

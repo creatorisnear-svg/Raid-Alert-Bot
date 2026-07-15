@@ -227,6 +227,23 @@ the user is building; separate from the raid-alert-bot above):**
 - `pnpm --filter @workspace/api-server exec tsc --noEmit` now exits 0 with
   zero errors. All workflows verified running (screenshot confirms landing page).
 
+## 2026-07-15 clan black screen and dashboard nav bug fix
+
+- **Bug 1 fixed (black screen on clan page):** `useRaidSiren` was called after a
+  conditional `return` in `detail.tsx`, violating React's Rules of Hooks. React
+  crashes the component tree when hook order changes between renders, which shows
+  as a blank/black screen. Fixed by moving the hook call above the `if (isLoading)
+  return` block.
+- **Bug 2 fixed (can't navigate to clan from dashboard):** Dashboard only showed
+  a `totalClans` count with no way to click into a clan. Added a "My Clans" section
+  to `dashboard.tsx` using the existing `useListMyClans` hook (`/api/me/clans`).
+  Each row links to `/clans/:id` (view) and has a gear icon for leaders linking to
+  `/clans/:id/settings`. Shows role badge, member count, alert count, last alert
+  time, and "Setup needed" / pending-requests badges.
+- **Bonus fix:** `setup.tsx` called `setLocation()` during render (React anti-pattern
+  that triggers a "cannot update while rendering" warning). Moved the redirect into
+  a `useEffect` so it fires after render.
+
 ## 2026-07-15 legal, accessibility, and mobile pass (AVIV Clan+ website)
 
 - Added `/terms` and `/privacy` pages (`src/pages/legal/terms.tsx`,
