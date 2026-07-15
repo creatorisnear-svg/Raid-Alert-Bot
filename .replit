@@ -1,4 +1,4 @@
-modules = ["nodejs-24"]
+modules = ["nodejs-20", "web"]
 
 [deployment]
 router = "application"
@@ -44,3 +44,6 @@ timeoutMs = 20000
 
 [userenv.shared]
 PING_TARGET = "everyone"
+
+[nix]
+channel = "stable-25_05"
