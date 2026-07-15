@@ -1,0 +1,1 @@
+- [Impersonating a browser Web Push subscription headlessly](fake-webpush-device-via-gcm-checkin.md) — receive real push notifications meant for someone else's device, no browser or Firebase project needed.
