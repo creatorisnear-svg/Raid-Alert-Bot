@@ -24,3 +24,4 @@ export const pool = new Pool({ connectionString, ssl });
 export const db = drizzle(pool, { schema });
 
 export * from "./schema";
+export { ensureSchema } from "./ensureSchema";
