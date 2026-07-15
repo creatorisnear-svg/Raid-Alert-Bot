@@ -157,9 +157,16 @@ export async function startPushListener(
   let lastEventAt: Date | null = null;
   let lastActivityAt: Date = new Date();
 
-  // Deduplication: the library replays previously-seen messages on reconnect.
-  // Track persistentIds so we never forward the same alert twice.
-  const seenIds = new Set<string>();
+  // Record startup time so we can discard alerts Google replays from before
+  // this process started. Google's MCS queues unacknowledged messages and
+  // re-delivers the full backlog on every new connection, so without this
+  // every redeploy would re-post every historical alert.
+  const startupTime = Date.now();
+
+  // Within a single session, also deduplicate by alert timestamp -- KAOS
+  // sends two near-identical pushes per event (different persistentIds,
+  // same data.timestamp). Keep only the first one we see.
+  const seenAlertTimestamps = new Set<number>();
 
   const instance = new PushReceiver(receiverConfig as never);
 
@@ -178,29 +185,53 @@ export async function startPushListener(
     markActivity();
     console.log("Raw push notification received:", JSON.stringify(n));
 
-    const envelope = n as { persistentId?: string; message?: { title?: string; body?: string; data?: Record<string, unknown> } };
+    const envelope = n as {
+      persistentId?: string;
+      message?: {
+        title?: string;
+        body?: string;
+        data?: Record<string, unknown>;
+      };
+    };
 
-    // Skip replayed messages the library re-delivers on reconnect.
-    if (envelope.persistentId) {
-      if (seenIds.has(envelope.persistentId)) {
-        console.log(`Skipping duplicate push (persistentId already seen): ${envelope.persistentId}`);
+    const message = envelope.message || {};
+    const data = (message.data || {}) as Record<string, unknown>;
+
+    // 1. Drop anything sent before this process started -- Google replays the
+    //    full unacknowledged backlog on every new MCS connection, so every
+    //    redeploy would otherwise re-post every historical alert.
+    //    data.timestamp is a Unix timestamp in seconds from KAOS.
+    const alertTimestampMs =
+      typeof data.timestamp === "number" ? data.timestamp * 1000 : null;
+    if (alertTimestampMs !== null && alertTimestampMs < startupTime) {
+      console.log(
+        `Skipping stale push (sent ${Math.round((startupTime - alertTimestampMs) / 1000)}s before startup): ${message.title}`
+      );
+      return;
+    }
+
+    // 2. Deduplicate within this session by alert timestamp -- KAOS sends two
+    //    near-identical pushes per event with different persistentIds but the
+    //    same data.timestamp. Only forward the first one.
+    if (alertTimestampMs !== null) {
+      if (seenAlertTimestamps.has(alertTimestampMs)) {
+        console.log(`Skipping duplicate push (timestamp already forwarded): ${alertTimestampMs}`);
         return;
       }
-      seenIds.add(envelope.persistentId);
-      // Prevent unbounded growth -- keep only the last 200 IDs.
-      if (seenIds.size > 200) {
-        const first = seenIds.values().next().value;
-        if (first !== undefined) seenIds.delete(first);
+      seenAlertTimestamps.add(alertTimestampMs);
+      // Prevent unbounded growth -- keep only the last 200 alert timestamps.
+      if (seenAlertTimestamps.size > 200) {
+        const first = seenAlertTimestamps.values().next().value;
+        if (first !== undefined) seenAlertTimestamps.delete(first);
       }
     }
 
     lastEventAt = new Date();
     try {
-      const message = envelope.message || {};
       onAlert({
         title: message.title || "Raid Alert!",
         body: message.body || "",
-        data: message.data || {},
+        data,
         raw: n,
       });
     } catch (err) {
