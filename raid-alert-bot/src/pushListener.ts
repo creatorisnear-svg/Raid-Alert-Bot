@@ -109,15 +109,16 @@ export async function startPushListener(
   onAlert: (alert: RaidAlert) => void
 ): Promise<PushListenerHandle> {
   let creds = loadCredentials();
-  let isNewDevice = false;
   if (!creds) {
     creds = await registerNewDevice();
-    isNewDevice = true;
   }
 
-  if (isNewDevice) {
-    await registerWithKaos(creds);
-  }
+  // Always re-register with KAOS on startup, even if we have stored
+  // credentials. KAOS only supports one registered device per raid key, so
+  // if the user re-enabled alerts on their phone since the last restart,
+  // KAOS is now pointing at the phone and the bot receives nothing. Claiming
+  // the slot on every startup ensures the bot stays as the active device.
+  await registerWithKaos(creds);
 
   const keys = {
     publicKey: Buffer.from(creds.keys.publicKey, "base64"),
