@@ -8,6 +8,7 @@ import { AppLayout } from '@/components/app-layout';
 import Home from '@/pages/home';
 import Dashboard from '@/pages/dashboard';
 import ClanCreate from '@/pages/clans/create';
+import ClanSetup from '@/pages/clans/setup';
 import SearchClans from '@/pages/search';
 import ClanDetail from '@/pages/clans/detail';
 import ClanSettings from '@/pages/clans/settings';
@@ -39,6 +40,9 @@ function Router() {
       </Route>
       <Route path="/clans/create">
         <AppLayout><ClanCreate /></AppLayout>
+      </Route>
+      <Route path="/clans/:id/setup">
+        {params => <AppLayout><ClanSetup id={Number(params.id)} /></AppLayout>}
       </Route>
       <Route path="/clans/:id/settings">
         {params => <AppLayout><ClanSettings id={Number(params.id)} /></AppLayout>}

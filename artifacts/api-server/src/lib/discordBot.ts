@@ -41,6 +41,39 @@ export async function getGuildRoles(guildId: string): Promise<DiscordRole[]> {
   return roles.filter((r) => r.name !== "@everyone").map((r) => ({ id: r.id, name: r.name, color: r.color }));
 }
 
+export async function checkBotInGuild(guildId: string): Promise<boolean> {
+  if (!DISCORD_BOT_TOKEN) return false;
+  try {
+    const res = await fetch(`https://discord.com/api/v10/guilds/${guildId}`, {
+      headers: {
+        Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function createTextChannel(
+  guildId: string,
+  name: string,
+): Promise<{ id: string; name: string }> {
+  if (!DISCORD_BOT_TOKEN) throw new Error("DISCORD_BOT_TOKEN not configured");
+  const res = await fetch(`https://discord.com/api/v10/guilds/${guildId}/channels`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name, type: 0 }),
+  });
+  if (!res.ok) throw new Error(`Discord API error: ${res.status} ${res.statusText}`);
+  const channel = (await res.json()) as { id: string; name: string };
+  return { id: channel.id, name: channel.name };
+}
+
 export async function postWebhookAlert(webhookUrl: string, content: string): Promise<void> {
   if (!webhookUrl) return;
   try {

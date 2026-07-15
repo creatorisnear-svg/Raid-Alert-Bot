@@ -41,7 +41,7 @@ export default function ClanCreate() {
       }
     }, {
       onSuccess: (newClan) => {
-        setLocation(`/clans/${newClan.id}/settings`);
+        setLocation(`/clans/${newClan.id}/setup`);
       }
     });
   };
