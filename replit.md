@@ -162,6 +162,7 @@ Replit can run the bot temporarily for development, but it is NOT the production
   the raid-alert bot and can be ignored or removed.
 
 ## User preferences
+- No em dashes (—) anywhere in copy or UI text. Use plain alternatives instead.
 - Final deployment target is **Koyeb**, not Replit deployments.
 - Alert message should ping `@everyone` (or a configured role) with raider name
   and server number.
