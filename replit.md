@@ -164,6 +164,7 @@ Replit can run the bot temporarily for development, but it is NOT the production
 ## User preferences
 - No em dashes (—) anywhere in copy or UI text. Use plain alternatives instead.
 - Final deployment target is **Koyeb**, not Replit deployments.
+- Production domain: **https://avivrce.xyz** — use this for APP_URL on Koyeb and any canonical/OG URLs.
 - Alert message should ping `@everyone` (or a configured role) with raider name
   and server number.
 - Secrets must go through Replit's environment-secrets storage — never hardcoded.
