@@ -50,6 +50,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /repo/artifacts/api-server/dist ./dist
 COPY --from=build /repo/artifacts/aviv-clan-plus/dist/public ./public
+# connect-pg-simple reads table.sql at runtime via __dirname; esbuild bundles
+# the JS but not the asset, so copy it next to the bundle explicitly.
+COPY --from=build /repo/node_modules/.pnpm/connect-pg-simple@10.0.0/node_modules/connect-pg-simple/table.sql ./dist/table.sql
 # Tells app.ts to serve the frontend + SPA fallback from this same process.
 ENV STATIC_DIR=/app/public
 # Koyeb sets $PORT automatically; the app reads it via process.env.PORT.
