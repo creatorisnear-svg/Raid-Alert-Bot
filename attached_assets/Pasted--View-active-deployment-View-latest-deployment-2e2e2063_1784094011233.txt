@@ -1,0 +1,83 @@
+
+
+View active deployment
+View latest deployment
+2e2e2063
+
+Error
+34m ago
+Triggered because service has been updated or redeployed
+An error occurred while building your application
+Why it happened?
+Different reasons can result in a build failure. The most common ones are:
+
+The language or package manager used by your application is not supported
+Your application is missing required dependencies
+An invalid configuration results in an error during the build process
+How to solve the problem?
+First, make sure that your application builds properly on your machine. Build logs also provide useful information to help you identify and resolve the root cause. Read our troubleshooting documentation to view and resolve common errors.
+
+Check the build logs for more details.
+
+Overview
+Web service
+Public URL
+dojroleplay.xyz/health
+(forwarded to port 8080)
+
+Deployment definition
+Repository
+creatorisnear-svg/Raid-Alert-Bot
+Branch
+main
+Commit
+2bcd21b9
+Builder type
+Dockerfile
+Privileged
+False
+Instance
+Free
+Configure
+Scaling
+0 of 1 running
+Configure
+Regions
+
+Washington, D.C
+Configure
+Environment
+4 variables
+Configure
+Volumes
+0 volumes attached
+Configure
+View more
+Build
+Failed
+Clone repository
+Repository cloned
+1s
+Start Docker
+Docker daemon started successfully
+2s
+Build
+We couldn't build the runnable container. Check the logs for more information. Docker build failed with exit code 1
+1s
+Logs
+
+Build ready to start ▶️
+>> Cloning github.com/creatorisnear-svg/Raid-Alert-Bot.git commit sha 2bcd21b9c9b04f1687bd1e8d4e1a300586831517 into /builder/workspace
+Initialized empty Git repository in /builder/git-clone-1804239181/.git/
+From https://github.com/creatorisnear-svg/Raid-Alert-Bot
+ * branch            2bcd21b9c9b04f1687bd1e8d4e1a300586831517 -> FETCH_HEAD
+HEAD is now at 2bcd21b Add Replit configuration file
+>> Moving content of subdirectory /builder/git-clone-1804239181/raid-alert-bot to /builder/workspace
+Starting Docker daemon...
+Waiting for the Docker daemon to start...
+done
+#1 [internal] load build definition from raid-alert-bot/Dockerfile
+#1 transferring dockerfile: 2B done
+#1 DONE 0.0s
+error: failed to solve: failed to read dockerfile: open raid-alert-bot/Dockerfile: no such file or directory
+Build failed ❌
