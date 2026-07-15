@@ -112,11 +112,29 @@ If real alerts never arrive via Path A: build a standard Discord bot that reads
 KAOSBOT's own raid-alert messages and reposts with `@everyone`. Needs a clan
 admin to do a one-time bot invite to the server.
 
-## Run locally (Replit)
+## Deployment: Koyeb (production)
+
+This bot is deployed and runs on **Koyeb**, not on Replit. Replit is used only
+as the code editor. Do not use Replit's deployment/publish feature for this project.
+
+### Koyeb setup
+1. Push the repo (or the `raid-alert-bot/` subdirectory) to GitHub.
+2. Koyeb → New Service → Docker → point at the repo (uses the included `Dockerfile`).
+3. Set all secrets from the table above in Koyeb's environment variable panel.
+4. Health check path: `/health`.
+5. After first run, copy the `CREDENTIALS_JSON=...` and `VAPID_KEYS_JSON=...` lines
+   from Koyeb's logs and paste them back as environment variables so redeploys don't
+   register a new device (which would break push delivery) or regenerate VAPID keys
+   (which would break all clan PWA subscriptions).
+6. Point UptimeRobot at `https://your-app.koyeb.app/health` (5-min interval) to
+   alert if the bot goes down.
+
+### Running on Replit (dev / testing only)
+Replit can run the bot temporarily for development, but it is NOT the production host.
 1. Set the secrets above in Replit's Secrets panel.
 2. The "Raid Alert Bot" workflow runs `cd raid-alert-bot && npm run start`.
 3. On first run, check logs for `CREDENTIALS_JSON=...` and `VAPID_KEYS_JSON=...`
-   lines — save those as Replit secrets so restarts reuse them.
+   lines — save those as secrets if you want to reuse the same device across restarts.
 
 ## Stack
 - Node.js, TypeScript, Express 4
