@@ -30,7 +30,7 @@ export default function InviteJoin({ token }: { token: string }) {
     joinClan.mutate({ token }, {
       onSuccess: () => {
         toast({ title: 'Joined!', description: `You are now a member of ${invite.name}.` });
-        setLocation(`/clans/${invite.clanId}`);
+        setLocation(`/clans/${invite.clanId}?justJoined=1`);
       },
       onError: (err) => {
         toast({ title: 'Could not join', description: err.error || 'Failed to join.', variant: 'destructive' });
@@ -49,7 +49,7 @@ export default function InviteJoin({ token }: { token: string }) {
     joinClan.mutate({ token }, {
       onSuccess: () => {
         toast({ title: 'Joined!', description: `You are now a member of ${invite.name}.` });
-        setLocation(`/clans/${invite.clanId}`);
+        setLocation(`/clans/${invite.clanId}?justJoined=1`);
       },
       onError: (err) => {
         toast({ title: 'Could not join', description: err.error || 'Failed to join.', variant: 'destructive' });

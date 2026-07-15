@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGetClan, useListAlerts, useListClanMembers, useSendTestAlert, getListAlertsQueryKey } from '@workspace/api-client-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'wouter';
-import { Loader2, Settings, Users, Bell, Activity, Clock, BellRing, BellOff, FlaskConical, Download, X, Trash2 } from 'lucide-react';
+import { Loader2, Settings, Users, Bell, Activity, Clock, BellRing, BellOff, FlaskConical, Download, X, Trash2, PartyPopper, Share } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { useRaidSiren } from '@/hooks/use-raid-siren';
 import { useInstallPrompt } from '@/hooks/use-install-prompt';
@@ -25,6 +25,17 @@ export default function ClanDetail({ id }: { id: number }) {
   const [dismissedIds, setDismissedIds] = useState<Set<number>>(new Set());
   const dismissAlert = (alertId: number) => setDismissedIds(prev => new Set(prev).add(alertId));
   const clearAllAlerts = () => setDismissedIds(new Set((alerts ?? []).map(a => a.id)));
+
+  const [showJoinBanner, setShowJoinBanner] = useState(false);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('justJoined') === '1') {
+      setShowJoinBanner(true);
+      params.delete('justJoined');
+      const newUrl = window.location.pathname + (params.toString() ? `?${params}` : '');
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, []);
 
   const isLoading = clanLoading || membersLoading || alertsLoading;
 
@@ -55,6 +66,40 @@ export default function ClanDetail({ id }: { id: number }) {
 
   return (
     <div className="space-y-6">
+      {/* Just-joined install nudge banner */}
+      {showJoinBanner && !install.isInstalled && (
+        <div className="relative border border-primary bg-primary/10 px-4 py-4 flex flex-col gap-3">
+          <button
+            onClick={() => setShowJoinBanner(false)}
+            className="absolute top-2 right-2 text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Dismiss"
+          >
+            <X className="h-4 w-4" />
+          </button>
+
+          <div className="flex items-center gap-2">
+            <PartyPopper className="h-5 w-5 text-primary shrink-0" />
+            <p className="font-display font-bold tracking-widest uppercase text-sm">Welcome to the clan!</p>
+          </div>
+
+          <p className="font-mono text-xs text-muted-foreground leading-relaxed">
+            Add <span className="text-foreground font-bold">AVIV Clan+</span> to your home screen so you get instant raid alerts even when the app is closed.
+          </p>
+
+          {install.canInstall ? (
+            <Button size="sm" onClick={() => { install.install(); setShowJoinBanner(false); }} disabled={install.isInstalling} className="self-start">
+              {install.isInstalling ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
+              Add to Home Screen
+            </Button>
+          ) : (
+            <div className="flex items-start gap-2 bg-background/60 border border-border px-3 py-2 font-mono text-xs text-muted-foreground">
+              <Share className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
+              <span>Tap the <span className="text-foreground font-bold">Share</span> icon in your browser, then choose <span className="text-foreground font-bold">"Add to Home Screen"</span>.</span>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Install banner — shown persistently until the app is installed */}
       {isMember && install.canInstall && (
         <div className="flex items-center justify-between gap-4 px-4 py-3 border border-primary/40 bg-primary/10">
