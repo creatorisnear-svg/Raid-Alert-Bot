@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#7a1f1f" />
+  <meta name="description" content="Instant raid alarm for TCK clan members." />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <title>TCK Raid Alerts</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0b0e0b;
+      --surface: #141a14;
+      --border: #2a3a2a;
+      --accent: #7a1f1f;
+      --accent-bright: #c0392b;
+      --text: #e8ede8;
+      --text-muted: #7a8f7a;
+      --green: #2ecc71;
+      --yellow: #f39c12;
+      --red: #e74c3c;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      gap: 0;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px 28px;
+      max-width: 420px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      text-align: center;
+    }
+
+    .header img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+    }
+
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .header .subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Status indicator */
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--bg);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-size: 0.875rem;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--text-muted);
+    }
+    .dot.green { background: var(--green); box-shadow: 0 0 8px var(--green); }
+    .dot.yellow { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
+    .dot.red { background: var(--red); }
+
+    .status-text { flex: 1; }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      letter-spacing: 0.01em;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--accent-bright);
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) { opacity: 0.9; }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      font-size: 0.875rem;
+      padding: 10px 16px;
+    }
+    .btn-secondary:hover:not(:disabled) { color: var(--text); border-color: var(--text-muted); }
+
+    /* Install banner */
+    .install-hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    /* Alert history */
+    .history-section { display: flex; flex-direction: column; gap: 10px; }
+    .history-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+    }
+
+    .alert-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 10px 14px;
+      background: var(--bg);
+      border-radius: 8px;
+      border-left: 3px solid var(--accent-bright);
+    }
+    .alert-item .alert-title { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+    .alert-item .alert-body  { font-size: 0.8rem; color: var(--text-muted); }
+    .alert-item .alert-time  { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+
+    .no-alerts {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    /* Siren flash overlay */
+    #flash {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(192, 57, 43, 0.25);
+      pointer-events: none;
+      z-index: 999;
+      animation: flashpulse 0.6s ease-out;
+    }
+    @keyframes flashpulse {
+      0%   { opacity: 1; }
+      100% { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div id="flash"></div>
+  <div class="card">
+    <div class="header">
+      <img src="/icons/icon-192.png" alt="TCK" id="clan-icon" />
+      <h1 id="clan-name">TCK Raid Alerts</h1>
+      <p class="subtitle">Get instant push notifications when your base is being raided — even on mobile with the screen off.</p>
+    </div>
+
+    <div class="status-row">
+      <div class="dot" id="status-dot"></div>
+      <span class="status-text" id="status-text">Checking…</span>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="btn btn-primary" id="main-btn" disabled>Enable Alerts</button>
+      <button class="btn btn-secondary" id="unsub-btn" style="display:none">Disable Alerts</button>
+    </div>
+
+    <p class="install-hint" id="install-hint" style="display:none">
+      📲 Add this page to your Home Screen for the best experience — tap the Share button then "Add to Home Screen" in Safari, or the ⋮ menu in Chrome.
+    </p>
+
+    <div class="history-section">
+      <div class="history-title">Recent Alerts</div>
+      <div id="alert-list"><div class="no-alerts">No alerts yet this session.</div></div>
+    </div>
+  </div>
+
+  <audio id="siren" src="/audio/siren.mp3" preload="auto"></audio>
+
+  <script>
+    (async () => {
+      const $ = (id) => document.getElementById(id);
+      const statusDot  = $('status-dot');
+      const statusText = $('status-text');
+      const mainBtn    = $('main-btn');
+      const unsubBtn   = $('unsub-btn');
+      const alertList  = $('alert-list');
+      const siren      = $('siren');
+      const flash      = $('flash');
+
+      // Fetch server config (clan name + our VAPID public key)
+      let vapidPublicKey = '';
+      try {
+        const cfg = await fetch('/api/config').then(r => r.json());
+        if (cfg.clanName) {
+          $('clan-name').textContent = cfg.clanName + ' Raid Alerts';
+          document.title = cfg.clanName + ' Raid Alerts';
+        }
+        vapidPublicKey = cfg.vapidPublicKey || '';
+      } catch(e) {
+        console.warn('Could not fetch /api/config:', e);
+      }
+
+      // Convert VAPID public key (base64url) to Uint8Array for pushManager
+      function urlB64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const b64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const raw = atob(b64);
+        return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+      }
+
+      // Show install hint on non-standalone browsers
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                        || window.navigator.standalone;
+      if (!isStandalone) $('install-hint').style.display = 'block';
+
+      // --- Service worker + push subscription state ---
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        setStatus('red', 'Push notifications not supported in this browser.');
+        mainBtn.textContent = 'Not Supported';
+        return;
+      }
+
+      let registration;
+      try {
+        registration = await navigator.serviceWorker.register('/sw.js');
+      } catch(e) {
+        setStatus('red', 'Service worker failed to install: ' + e.message);
+        return;
+      }
+
+      // Listen for raid alerts relayed by the service worker
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'RAID_ALERT') {
+          addAlertToHistory(event.data.title, event.data.body);
+          playFlash();
+        }
+      });
+
+      await updateUI();
+
+      mainBtn.addEventListener('click', async () => {
+        mainBtn.disabled = true;
+        mainBtn.textContent = 'Enabling…';
+        try {
+          if (Notification.permission === 'denied') {
+            setStatus('red', 'Notifications are blocked. Please allow them in browser settings.');
+            mainBtn.textContent = 'Enable Alerts';
+            mainBtn.disabled = false;
+            return;
+          }
+          const permission = await Notification.requestPermission();
+          if (permission !== 'granted') {
+            setStatus('yellow', 'Permission not granted — alerts will not arrive.');
+            mainBtn.textContent = 'Enable Alerts';
+            mainBtn.disabled = false;
+            return;
+          }
+          const sub = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlB64ToUint8Array(vapidPublicKey),
+          });
+          await fetch('/api/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(sub.toJSON()),
+          });
+          setStatus('green', 'Alerts enabled — you\'ll be notified when a raid starts.');
+          unsubBtn.style.display = 'block';
+          mainBtn.style.display = 'none';
+        } catch(e) {
+          setStatus('red', 'Failed to enable alerts: ' + e.message);
+          mainBtn.textContent = 'Enable Alerts';
+          mainBtn.disabled = false;
+        }
+      });
+
+      unsubBtn.addEventListener('click', async () => {
+        unsubBtn.disabled = true;
+        try {
+          const sub = await registration.pushManager.getSubscription();
+          if (sub) {
+            await fetch('/api/unsubscribe', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ endpoint: sub.endpoint }),
+            });
+            await sub.unsubscribe();
+          }
+          setStatus('yellow', 'Alerts disabled. Tap Enable Alerts to turn them back on.');
+          unsubBtn.style.display = 'none';
+          mainBtn.textContent = 'Enable Alerts';
+          mainBtn.style.display = 'block';
+          mainBtn.disabled = false;
+        } catch(e) {
+          unsubBtn.disabled = false;
+          alert('Failed to unsubscribe: ' + e.message);
+        }
+      });
+
+      async function updateUI() {
+        const permission = Notification.permission;
+        const sub = await registration.pushManager.getSubscription();
+
+        if (permission === 'denied') {
+          setStatus('red', 'Notifications blocked. Allow them in browser settings.');
+          mainBtn.textContent = 'Enable Alerts';
+          mainBtn.disabled = true;
+          unsubBtn.style.display = 'none';
+          mainBtn.style.display = 'block';
+        } else if (sub) {
+          setStatus('green', 'Alerts enabled — you\'ll be notified when a raid starts.');
+          unsubBtn.style.display = 'block';
+          mainBtn.style.display = 'none';
+        } else {
+          setStatus('yellow', 'Tap Enable Alerts to receive raid notifications.');
+          mainBtn.textContent = 'Enable Alerts';
+          mainBtn.disabled = false;
+          unsubBtn.style.display = 'none';
+          mainBtn.style.display = 'block';
+        }
+      }
+
+      function setStatus(color, text) {
+        statusDot.className = 'dot ' + color;
+        statusText.textContent = text;
+      }
+
+      function addAlertToHistory(title, body) {
+        const noAlerts = alertList.querySelector('.no-alerts');
+        if (noAlerts) noAlerts.remove();
+
+        const time = new Date().toLocaleTimeString();
+        const item = document.createElement('div');
+        item.className = 'alert-item';
+        item.innerHTML = `
+          <div class="alert-title">${escHtml(title)}</div>
+          <div class="alert-body">${escHtml(body)}</div>
+          <div class="alert-time">${time}</div>
+        `;
+        alertList.prepend(item);
+        // Keep at most 10 entries
+        while (alertList.children.length > 10) alertList.lastChild.remove();
+      }
+
+      function playFlash() {
+        // Play siren (requires user gesture to have occurred first — subscribing counts)
+        siren.currentTime = 0;
+        siren.play().catch(() => {});
+        // Flash overlay
+        flash.style.display = 'block';
+        flash.style.animation = 'none';
+        void flash.offsetHeight; // force reflow
+        flash.style.animation = '';
+        setTimeout(() => { flash.style.display = 'none'; }, 700);
+      }
+
+      function escHtml(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+    })();
+  </script>
+</body>
+</html>
