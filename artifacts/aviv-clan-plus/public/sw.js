@@ -47,12 +47,20 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const clanId = event.notification.data?.clanId ?? null;
+  // Navigate to the clan page (or dashboard) with ?siren=1 so the app knows
+  // to auto-play the alarm even if it was fully closed when the push arrived.
+  const targetUrl = clanId ? `/clans/${clanId}?siren=1` : '/dashboard?siren=1';
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      // If there's already an open window, navigate it to the clan page.
       for (const client of clients) {
-        if ('focus' in client) return client.focus();
+        if ('navigate' in client) {
+          client.navigate(targetUrl);
+          return client.focus();
+        }
       }
-      if (self.clients.openWindow) return self.clients.openWindow('/dashboard');
+      if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
     }),
   );
 });

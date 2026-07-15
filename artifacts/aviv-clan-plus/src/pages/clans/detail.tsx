@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'wouter';
-import { Loader2, Settings, Users, Bell, Activity, Clock, BellRing, BellOff, FlaskConical, Download, X } from 'lucide-react';
+import { Loader2, Settings, Users, Bell, Activity, Clock, BellRing, BellOff, FlaskConical, Download } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { useRaidSiren } from '@/hooks/use-raid-siren';
 import { useInstallPrompt } from '@/hooks/use-install-prompt';
@@ -21,7 +21,6 @@ export default function ClanDetail({ id }: { id: number }) {
   const sendTestAlert = useSendTestAlert();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [installDismissed, setInstallDismissed] = useState(false);
 
   const isLoading = clanLoading || membersLoading || alertsLoading;
 
@@ -52,8 +51,8 @@ export default function ClanDetail({ id }: { id: number }) {
 
   return (
     <div className="space-y-6">
-      {/* Install banner */}
-      {isMember && install.canInstall && !installDismissed && (
+      {/* Install banner — shown persistently until the app is installed */}
+      {isMember && install.canInstall && (
         <div className="flex items-center justify-between gap-4 px-4 py-3 border border-primary/40 bg-primary/10">
           <div className="flex items-center gap-3 min-w-0">
             <Download className="h-5 w-5 text-primary shrink-0" />
@@ -62,14 +61,9 @@ export default function ClanDetail({ id }: { id: number }) {
               <p className="text-xs font-mono text-muted-foreground">Get instant raid alerts as push notifications.</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Button size="sm" onClick={install.install} disabled={install.isInstalling}>
-              {install.isInstalling ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Install'}
-            </Button>
-            <Button size="icon" variant="ghost" className="h-8 w-8" aria-label="Dismiss" onClick={() => setInstallDismissed(true)}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <Button size="sm" onClick={install.install} disabled={install.isInstalling} className="shrink-0">
+            {install.isInstalling ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Install'}
+          </Button>
         </div>
       )}
 

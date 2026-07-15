@@ -98,6 +98,20 @@ export function useRaidSiren(clanId: number) {
     };
   }, [supported, playSiren, toast]);
 
+  // If the app was closed when the push arrived and the user tapped the
+  // notification, the SW navigates here with ?siren=1. Detect it, play the
+  // siren, and clean the URL so a refresh doesn't replay it.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('siren') !== '1') return;
+    params.delete('siren');
+    const cleaned = params.toString();
+    window.history.replaceState({}, '', window.location.pathname + (cleaned ? `?${cleaned}` : ''));
+    // Small delay so the audio element is guaranteed to be initialised.
+    const t = setTimeout(() => playSiren(), 300);
+    return () => clearTimeout(t);
+  }, [playSiren]);
+
   const enable = useCallback(async () => {
     if (!supported || !vapid?.publicKey) return;
 
