@@ -4,7 +4,7 @@ import { postRaidAlert } from "./discord";
 import { createHealthServer } from "./server";
 import { loadOrCreateVapidKeys } from "./vapidStore";
 import { initWebPush, pushAlertToSubscribers } from "./webPush";
-import { callRaidAlert } from "./twilio";
+import { ntfyRaidAlert } from "./ntfy";
 
 let listenerHandle: PushListenerHandle | null = null;
 
@@ -15,7 +15,7 @@ async function handleAlert(alert: RaidAlert) {
   const [discordResult, pushResult, twilioResult] = await Promise.allSettled([
     postRaidAlert(alert),
     pushAlertToSubscribers(alert),
-    callRaidAlert(alert),
+    ntfyRaidAlert(alert),
   ]);
 
   if (discordResult.status === "rejected") {
