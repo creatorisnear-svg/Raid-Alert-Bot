@@ -1,1 +1,2 @@
 - [Impersonating a browser Web Push subscription headlessly](fake-webpush-device-via-gcm-checkin.md) — receive real push notifications meant for someone else's device, no browser or Firebase project needed.
+- [Koyeb-only deployment](koyeb-only-deployment.md) — this project's production (raid-alert-bot, AVIV Clan+ site/API, database) all runs on Koyeb, never Replit Deployments.

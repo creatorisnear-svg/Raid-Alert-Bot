@@ -242,3 +242,52 @@ the user is building; separate from the raid-alert-bot above):**
   Authenticated pages (dashboard/search/clan pages) were not re-screenshotted
   (they require a Discord login) but already used responsive Tailwind
   classes (`grid-cols-1 md:...`, `flex-col md:flex-row`) prior to this pass.
+
+## Deployment target: Koyeb, not Replit Deployments — READ THIS FIRST
+
+**The user hosts everything outside Replit, on Koyeb (they already have a
+Koyeb account/project set up).** This applies to the whole AVIV Clan+ stack —
+`artifacts/api-server`, `artifacts/aviv-clan-plus`, and its Postgres database
+— not just `raid-alert-bot`. Do not suggest Replit's Publish/Deployments
+flow for these. Replit is the **development environment only**: use it to
+write code, run the dev workflows for live preview, and provision Replit's
+dev Postgres for local iteration — then hand off to Koyeb for anything that
+needs to run continuously in production.
+
+What's already in place for Koyeb deployment (as of 2026-07-15):
+- `raid-alert-bot/Dockerfile` — already deployed by the user (pre-existing,
+  unchanged by this pass).
+- `artifacts/api-server/Dockerfile` and `artifacts/aviv-clan-plus/Dockerfile`
+  — added so both can be deployed the same way. **Build context for both
+  must be the monorepo root** (not the artifact subdirectory), because they
+  depend on workspace packages (`@workspace/db`, `@workspace/api-zod`,
+  `@workspace/api-client-react`). Set "Dockerfile location" in Koyeb to the
+  artifact's `Dockerfile` path but leave the build context/work directory at
+  repo root.
+- `.env.example` in each of those two artifact directories lists the exact
+  env vars Koyeb needs and where to get them (Discord app credentials,
+  session secret, database URL, public API URL). `aviv-clan-plus`'s vars are
+  **build-time** (Vite inlines them), `api-server`'s are runtime.
+- The frontend's API client now supports a configurable base URL
+  (`VITE_API_URL` → `setBaseUrl()` in `src/main.tsx`) since on Koyeb the
+  frontend and API are separate services on separate domains, unlike Replit
+  where they share one domain via path routing (`BASE_PATH` must be `/` for
+  the standalone Koyeb build, vs. the artifact-specific prefix on Replit).
+- **Database**: Replit's built-in dev Postgres (`DATABASE_URL` pointing at
+  host `helium`) is only reachable from inside the Replit workspace — it
+  will NOT work as the production database from Koyeb. The user needs a
+  Postgres instance Koyeb can reach (Koyeb's own Postgres add-on, Neon,
+  Supabase, etc.), then push the schema to it once with
+  `DATABASE_URL="<that url>" pnpm --filter @workspace/db run push`. This has
+  NOT been done yet — the schema has only been pushed to the Replit dev
+  database so far.
+- **Discord app**: still needs to be created by the user at
+  https://discord.com/developers/applications (OAuth client ID/secret + bot
+  token) — the user declined Replit's Discord connector, so this must be
+  done manually. Redirect URI must be
+  `<api-server's Koyeb URL>/api/auth/discord/callback`.
+- Not yet done: actually building/pushing these Docker images to Koyeb (the
+  agent has no Koyeb credentials/access — this is the user's own account),
+  provisioning the production Postgres, and creating the Discord app. The
+  agent prepared the repo to make that a config/dashboard task rather than a
+  code task.
