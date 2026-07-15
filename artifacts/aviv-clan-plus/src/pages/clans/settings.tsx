@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useGetClan, useUpdateClan, useListDiscordChannels, useListDiscordRoles, useDeleteClan, getGetClanQueryKey, useListJoinRequests, useResolveJoinRequest, getListJoinRequestsQueryKey } from '@workspace/api-client-react';
+import { useGetClan, useUpdateClan, useListDiscordChannels, useListDiscordRoles, useDeleteClan, getGetClanQueryKey, useListJoinRequests, useResolveJoinRequest, getListJoinRequestsQueryKey, useGetInviteToken, useRegenerateInviteToken, getGetInviteTokenQueryKey } from '@workspace/api-client-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,7 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { useLocation } from 'wouter';
-import { Loader2, Settings, Shield, Trash2, Key, Save, Users, Check, X } from 'lucide-react';
+import { Loader2, Shield, Trash2, Key, Save, Users, Check, X, Link2, Copy, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
@@ -36,6 +36,8 @@ export default function ClanSettings({ id }: { id: number }) {
   const updateClan = useUpdateClan();
   const deleteClan = useDeleteClan();
   const resolveRequest = useResolveJoinRequest();
+  const { data: inviteToken, isLoading: inviteLoading } = useGetInviteToken(id, { query: { enabled: !!id } });
+  const regenerateToken = useRegenerateInviteToken();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -67,6 +69,25 @@ export default function ClanSettings({ id }: { id: number }) {
       },
       onError: (err) => {
         toast({ title: "Error", description: err.error || "Failed to update.", variant: "destructive" });
+      }
+    });
+  };
+
+  const handleCopyInvite = () => {
+    if (!inviteToken?.url) return;
+    navigator.clipboard.writeText(inviteToken.url).then(() => {
+      toast({ title: "Copied", description: "Invite link copied to clipboard." });
+    });
+  };
+
+  const handleRegenerateInvite = () => {
+    regenerateToken.mutate({ clanId: id }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetInviteTokenQueryKey(id) });
+        toast({ title: "Link Regenerated", description: "The old invite link is now invalid." });
+      },
+      onError: () => {
+        toast({ title: "Error", description: "Failed to regenerate link.", variant: "destructive" });
       }
     });
   };
@@ -207,6 +228,31 @@ export default function ClanSettings({ id }: { id: number }) {
             </Button>
           </form>
         </Form>
+
+        {/* Invite Link */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Link2 className="h-5 w-5 text-primary" /> Invite Link</CardTitle>
+            <CardDescription>Share this link to let players join the clan. Regenerate to invalidate the old one.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {inviteLoading ? (
+              <div className="flex items-center gap-2 text-muted-foreground font-mono text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Generating link...</div>
+            ) : inviteToken?.url ? (
+              <div className="flex items-center gap-2">
+                <code className="flex-1 block truncate bg-muted px-3 py-2 text-xs font-mono border border-border rounded-none select-all">
+                  {inviteToken.url}
+                </code>
+                <Button size="icon" variant="outline" aria-label="Copy invite link" className="shrink-0 h-9 w-9" onClick={handleCopyInvite}>
+                  <Copy className="h-4 w-4" />
+                </Button>
+                <Button size="icon" variant="outline" aria-label="Regenerate invite link" className="shrink-0 h-9 w-9" onClick={handleRegenerateInvite} disabled={regenerateToken.isPending}>
+                  {regenerateToken.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                </Button>
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
 
         {/* Join Requests */}
         {clan.isPrivate && joinRequests && joinRequests.length > 0 && (
