@@ -1,0 +1,26 @@
+Instance created. Preparing to start...
+No stored VAPID keys found -- generating a new key pair for the clan app...
+=== New VAPID keys saved to data/vapid-keys.json ===
+If you're deploying somewhere without a persistent disk (e.g. Koyeb),
+copy the line below into the VAPID_KEYS_JSON environment variable so a
+redeploy doesn't wipe them out -- if these keys ever change, every clan
+member who installed the app will have to reinstall it.
+
+VAPID_KEYS_JSON={"publicKey":"BB0_H2gYfcBj5syWMeuh55lsbnqqH_55lWpHPTrlhZShcYiI-o6b_pGxHqMwoufWQy7k-xDSOQH9ZCrdSZftwxI","privateKey":"DM5ef2n8Kil4-Kj2CT7-YQKzhGzopVcF2pOGzsKs34s"}
+
+Ping target configured as: 1526816005475667988
+Clan app served for: TCK
+Health server listening on port 8080
+Registered with KAOS as the active raid-alert device: {"success":true,"message":"Device registration successful"}
+Note: this replaces whatever device (e.g. your phone) was previously registered to this raid key -- re-open KAOS+ and tap ENABLE ALERTS there if you also want phone notifications.
+Instance is starting... Waiting for health checks to pass.
+[2026-07-15T06:34:29.051Z] Connected to Google push infrastructure.
+[2026-07-15T06:34:29.102Z] Push receiver ready.
+Push listener ready -- waiting for raid alerts.
+Raw push notification received: {"message":{"title":"🚨 RAID ALERT!","body":"Your base is under siege on server: TEST!","icon":"/img/icon-192x192.png","badge":"/img/badge-96x96.png","data":{"serverId":"TEST","timestamp":1784094337,"gameUrl":"https://bot-app.ka0s.uk","type":"test","testTime":"2026-07-15 05:45:37"}},"persistentId":"0:1784094337282985%7031b2e6f9fd7ecd"}
+Raid alert received: 🚨 RAID ALERT! - Your base is under siege on server: TEST!
+Raw push notification received: {"message":{"title":"🚨 RAID ALERT!","body":"Your base is under siege on server: TEST!","icon":"/img/icon-192x192.png","badge":"/img/badge-96x96.png","data":{"serverId":"TEST","timestamp":1784094337,"gameUrl":"https://bot-app.ka0s.uk","type":"test","testTime":"2026-07-15 05:45:37"}},"persistentId":"0:1784094337303519%7031b2e6f9fd7ecd"}
+Raid alert received: 🚨 RAID ALERT! - Your base is under siege on server: TEST!
+Posted raid alert to Discord.
+Posted raid alert to Discord.
+Instance is healthy. All health checks are passing.
