@@ -1,0 +1,23 @@
+Instance created. Preparing to start...
+Ping target configured as: 1526816005475667988
+Clan app served for: TCK
+Health server listening on port 8080
+Instance is starting... Waiting for health checks to pass.
+Registered with KAOS as the active raid-alert device: {"success":true,"message":"Device registration successful"}
+Note: this replaces whatever device (e.g. your phone) was previously registered to this raid key -- re-open KAOS+ and tap ENABLE ALERTS there if you also want phone notifications.
+[2026-07-15T06:49:29.654Z] Connected to Google push infrastructure.
+[2026-07-15T06:49:29.718Z] Push receiver ready.
+Push listener ready -- waiting for raid alerts.
+Raw push notification received: {"message":{"title":"🚨 RAID ALERT!","body":"Your base is under siege on server: TEST!","icon":"/img/icon-192x192.png","badge":"/img/badge-96x96.png","data":{"serverId":"TEST","timestamp":1784094337,"gameUrl":"https://bot-app.ka0s.uk","type":"test","testTime":"2026-07-15 05:45:37"}},"persistentId":"0:1784094337282985%7031b2e6f9fd7ecd"}
+Skipping stale push (sent 3833s before startup): 🚨 RAID ALERT!
+Raw push notification received: {"message":{"title":"🚨 RAID ALERT!","body":"Your base is under siege on server: TEST!","icon":"/img/icon-192x192.png","badge":"/img/badge-96x96.png","data":{"serverId":"TEST","timestamp":1784094337,"gameUrl":"https://bot-app.ka0s.uk","type":"test","testTime":"2026-07-15 05:45:37"}},"persistentId":"0:1784094337303519%7031b2e6f9fd7ecd"}
+Skipping stale push (sent 3833s before startup): 🚨 RAID ALERT!
+Raw push notification received: {"message":{"title":"🚨 RAID ALERT!","body":"Your base is under siege on server: TEST!","icon":"/img/icon-192x192.png","badge":"/img/badge-96x96.png","data":{"serverId":"TEST","timestamp":1784097841,"gameUrl":"https://bot-app.ka0s.uk","type":"test","testTime":"2026-07-15 06:44:01"}},"persistentId":"0:1784097841264074%7031b2e6f9fd7ecd"}
+Skipping stale push (sent 329s before startup): 🚨 RAID ALERT!
+Raw push notification received: {"message":{"title":"🚨 RAID ALERT!","body":"Your base is under siege on server: TEST!","icon":"/img/icon-192x192.png","badge":"/img/badge-96x96.png","data":{"serverId":"TEST","timestamp":1784097841,"gameUrl":"https://bot-app.ka0s.uk","type":"test","testTime":"2026-07-15 06:44:01"}},"persistentId":"0:1784097841314364%7031b2e6f9fd7ecd"}
+Skipping stale push (sent 329s before startup): 🚨 RAID ALERT!
+Instance is healthy. All health checks are passing.
+[2026-07-15T06:53:00.228Z] Heartbeat OK (connection alive).
+Raw push notification received: {"message":{"title":"🚨 RAID ALERT!","body":"Your base is under siege on server: 1!","icon":"/img/icon-192x192.png","badge":"/img/badge-96x96.png","data":{"serverId":"1","timestamp":1784098432,"gameUrl":"https://bot-app.ka0s.uk"}},"persistentId":"0:1784098433048512%7031b2e6f9fd7ecd"}
+Raid alert received: 🚨 RAID ALERT! - Your base is under siege on server: 1!
+Posted raid alert to Discord.
