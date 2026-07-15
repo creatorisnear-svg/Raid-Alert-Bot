@@ -62,8 +62,8 @@ export default function Home() {
           </h1>
 
           <p className="text-lg md:text-xl text-muted-foreground font-mono max-w-2xl mb-12 leading-relaxed">
-            Get instant Discord and push notifications when your base is being raided.
-            Connect your KAOS+ sensors and your whole clan gets pinged automatically.
+            Keep your whole clan in the loop when a raid hits. Connect your KAOS+ sensors
+            and everyone gets notified instantly — on Discord and their phone.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
