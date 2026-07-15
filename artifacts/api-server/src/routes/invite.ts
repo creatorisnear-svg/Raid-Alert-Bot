@@ -10,7 +10,7 @@ const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
 
 function makeInviteUrl(token: string): string {
   const base = APP_URL.replace(/\/api$/, "");
-  return `${base}/aviv-clan-plus/invite/${token}`;
+  return `${base}/invite/${token}`;
 }
 
 router.get("/clans/:clanId/invite-token", requireAuth, async (req, res): Promise<void> => {
