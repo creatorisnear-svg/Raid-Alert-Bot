@@ -1,0 +1,127 @@
+import { Link } from 'wouter';
+import { Button } from '@/components/ui/button';
+import { ShieldAlert, Zap, RadioReceiver, ShieldCheck, ChevronRight } from 'lucide-react';
+import { useGetMe } from '@workspace/api-client-react';
+
+export default function Home() {
+  const { data: user, isLoading } = useGetMe({ query: { retry: false } });
+
+  return (
+    <div className="min-h-[100dvh] bg-background text-foreground flex flex-col relative overflow-hidden">
+      {/* Tactical background grid */}
+      <div className="absolute inset-0 pointer-events-none opacity-20 z-0" style={{
+        backgroundImage: 'linear-gradient(hsl(var(--primary)/0.2) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary)/0.2) 1px, transparent 1px)',
+        backgroundSize: '40px 40px',
+        backgroundPosition: 'center center'
+      }}></div>
+      
+      {/* Header */}
+      <header className="px-6 py-6 flex items-center justify-between border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-50">
+        <div className="flex items-center gap-3">
+          <ShieldAlert className="h-8 w-8 text-primary" />
+          <span className="font-display font-bold text-xl tracking-[0.2em]">AVIV<span className="text-primary">+</span></span>
+        </div>
+        <div>
+          {!isLoading && (
+            user ? (
+              <Button asChild variant="outline" className="clip-edges">
+                <Link href="/dashboard">Access Command</Link>
+              </Button>
+            ) : (
+              <Button asChild className="clip-edges group">
+                <a href="/api/auth/discord">
+                  Authenticate 
+                  <ChevronRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </a>
+              </Button>
+            )
+          )}
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <main className="flex-1 flex flex-col relative z-10">
+        <section className="px-6 py-24 md:py-32 flex flex-col items-center text-center max-w-4xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-none border border-primary/30 bg-primary/10 text-primary mb-8 animate-pulse">
+            <RadioReceiver className="h-4 w-4" />
+            <span className="font-mono text-xs font-bold tracking-widest uppercase">System Online</span>
+          </div>
+          
+          <h1 className="text-5xl md:text-7xl font-display font-bold tracking-widest uppercase leading-tight mb-6">
+            Raid Alerts <br/>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-amber-500">Perfected</span>
+          </h1>
+          
+          <p className="text-lg md:text-xl text-muted-foreground font-mono max-w-2xl mb-12 leading-relaxed">
+            Tactical coordination software for Rust clans. Connect your KAOS+ sensors to Discord. 
+            Receive instant, reliable intelligence when your base is breached.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+            {!isLoading && (
+              user ? (
+                <Button asChild size="lg" className="clip-edges text-lg">
+                  <Link href="/dashboard">Access Command Dashboard</Link>
+                </Button>
+              ) : (
+                <Button asChild size="lg" className="clip-edges text-lg group">
+                  <a href="/api/auth/discord">
+                    Sign In with Discord
+                    <ChevronRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  </a>
+                </Button>
+              )
+            )}
+          </div>
+        </section>
+
+        {/* Features Grid */}
+        <section className="px-6 py-24 bg-card/50 border-y border-border/50">
+          <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+            
+            <div className="p-8 border border-border bg-background relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <Zap className="h-24 w-24 text-primary" />
+              </div>
+              <Zap className="h-10 w-10 text-primary mb-6" />
+              <h3 className="font-display text-xl mb-3 tracking-widest">Instant Relay</h3>
+              <p className="font-mono text-sm text-muted-foreground leading-relaxed">
+                Zero latency between a sensor trigger and your Discord server. Our infrastructure prioritizes alert delivery above all other traffic.
+              </p>
+            </div>
+
+            <div className="p-8 border border-border bg-background relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <RadioReceiver className="h-24 w-24 text-primary" />
+              </div>
+              <RadioReceiver className="h-10 w-10 text-primary mb-6" />
+              <h3 className="font-display text-xl mb-3 tracking-widest">KAOS+ Integration</h3>
+              <p className="font-mono text-sm text-muted-foreground leading-relaxed">
+                Directly compatible with your KAOS+ keys. Configure once per clan and cover your entire roster.
+              </p>
+            </div>
+
+            <div className="p-8 border border-border bg-background relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <ShieldCheck className="h-24 w-24 text-primary" />
+              </div>
+              <ShieldCheck className="h-10 w-10 text-primary mb-6" />
+              <h3 className="font-display text-xl mb-3 tracking-widest">Role Targeting</h3>
+              <p className="font-mono text-sm text-muted-foreground leading-relaxed">
+                Ping specific Discord roles automatically. Avoid spamming builders when only PVPers need to respond.
+              </p>
+            </div>
+
+          </div>
+        </section>
+      </main>
+      
+      <footer className="px-6 py-8 border-t border-border bg-background text-center flex flex-col items-center">
+        <ShieldAlert className="h-6 w-6 text-muted-foreground mb-4" />
+        <p className="font-mono text-xs text-muted-foreground tracking-widest uppercase">
+          AVIV Clan Network
+        </p>
+      </footer>
+    </div>
+  );
+}

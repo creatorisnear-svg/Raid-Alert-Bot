@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/aviv-clan-plus/"
+title = "AVIV Clan+"
+version = "1.0.0"
+id = "artifacts/aviv-clan-plus"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/aviv-clan-plus/" ]
+localPort = 25873
+
+[services.development]
+run = "pnpm --filter @workspace/aviv-clan-plus run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/aviv-clan-plus", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/aviv-clan-plus/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25873"
+BASE_PATH = "/aviv-clan-plus/"

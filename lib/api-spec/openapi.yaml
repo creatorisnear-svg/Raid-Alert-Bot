@@ -3,20 +3,38 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: AVIV Clan+ API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: clans
+    description: Clan management
+  - name: members
+    description: Clan membership
+  - name: joinRequests
+    description: Join request management
+  - name: invite
+    description: Invite links
+  - name: discord
+    description: Discord server integration
+  - name: alerts
+    description: Raid alert log
+  - name: push
+    description: Web push subscriptions
+  - name: me
+    description: Current user
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +42,900 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── Auth ──────────────────────────────────────────────────────────────────
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get the current authenticated user
+      responses:
+        "200":
+          description: Authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Sign out
+      responses:
+        "204":
+          description: Signed out
+
+  # ── Me ────────────────────────────────────────────────────────────────────
+  /me/clans:
+    get:
+      operationId: listMyClans
+      tags: [me]
+      summary: List clans the current user belongs to (as leader or member)
+      responses:
+        "200":
+          description: My clans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MyClanEntry"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /me/dashboard:
+    get:
+      operationId: getDashboard
+      tags: [me]
+      summary: Dashboard summary for current user
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Clans ─────────────────────────────────────────────────────────────────
+  /clans:
+    get:
+      operationId: searchClans
+      tags: [clans]
+      summary: Search public clans
+      parameters:
+        - name: q
+          in: query
+          description: Name search string
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Matching public clans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ClanSummary"
+    post:
+      operationId: createClan
+      tags: [clans]
+      summary: Create a new clan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClanInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Clan"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /clans/{clanId}:
+    get:
+      operationId: getClan
+      tags: [clans]
+      summary: Get clan details
+      parameters:
+        - $ref: "#/components/parameters/ClanId"
+      responses:
+        "200":
+          description: Clan details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Clan"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateClan
+      tags: [clans]
+      summary: Update clan settings (leader only)
+      parameters:
+        - $ref: "#/components/parameters/ClanId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClanUpdate"
+      responses:
+        "200":
+          description: Updated clan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Clan"
+        "403":
+          description: Not the clan leader
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteClan
+      tags: [clans]
+      summary: Delete a clan (leader only)
+      parameters:
+        - $ref: "#/components/parameters/ClanId"
+      responses:
+        "204":
+          description: Deleted
+        "403":
+          description: Not the clan leader
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Members ───────────────────────────────────────────────────────────────
+  /clans/{clanId}/members:
+    get:
+      operationId: listClanMembers
+      tags: [members]
+      summary: List clan members
+      parameters:
+        - $ref: "#/components/parameters/ClanId"
+      responses:
+        "200":
+          description: Members list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ClanMember"
+
+  /clans/{clanId}/members/me:
+    patch:
+      operationId: updateMyMembership
+      tags: [members]
+      summary: Update my membership settings (e.g. silence this clan)
+      parameters:
+        - $ref: "#/components/parameters/ClanId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MembershipUpdate"
+      responses:
+        "200":
+          description: Updated membership
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClanMember"
+        "404":
+          description: Not a member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: leaveClан
+      tags: [members]
+      summary: Leave a clan
+      parameters:
+        - $ref: "#/components/parameters/ClanId"
+      responses:
+        "204":
+          description: Left
+
+  /clans/{clanId}/members/{userId}:
+    delete:
+      operationId: kickMember
+      tags: [members]
+      summary: Remove a member from the clan (leader only)
+      parameters:
+        - $ref: "#/components/parameters/ClanId"
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Removed
+        "403":
+          description: Not the clan leader
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Join requests ─────────────────────────────────────────────────────────
+  /clans/{clanId}/join-requests:
+    post:
+      operationId: requestToJoin
+      tags: [joinRequests]
+      summary: Request to join a clan
+      parameters:
+        - $ref: "#/components/parameters/ClanId"
+      responses:
+        "201":
+          description: Request submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinRequest"
+        "409":
+          description: Already a member or request already pending
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      operationId: listJoinRequests
+      tags: [joinRequests]
+      summary: List pending join requests (leader only)
+      parameters:
+        - $ref: "#/components/parameters/ClanId"
+      responses:
+        "200":
+          description: Pending requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JoinRequest"
+
+  /clans/{clanId}/join-requests/{requestId}:
+    patch:
+      operationId: resolveJoinRequest
+      tags: [joinRequests]
+      summary: Approve or reject a join request (leader only)
+      parameters:
+        - $ref: "#/components/parameters/ClanId"
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinRequestResolution"
+      responses:
+        "200":
+          description: Resolved request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinRequest"
+
+  # ── Invite ────────────────────────────────────────────────────────────────
+  /clans/{clanId}/invite-token:
+    get:
+      operationId: getInviteToken
+      tags: [invite]
+      summary: Get or create an invite token for the clan (leader only)
+      parameters:
+        - $ref: "#/components/parameters/ClanId"
+      responses:
+        "200":
+          description: Invite token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InviteTokenInfo"
+    post:
+      operationId: regenerateInviteToken
+      tags: [invite]
+      summary: Regenerate the invite token (leader only)
+      parameters:
+        - $ref: "#/components/parameters/ClanId"
+      responses:
+        "200":
+          description: New invite token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InviteTokenInfo"
+
+  /invite/{token}:
+    get:
+      operationId: getInviteInfo
+      tags: [invite]
+      summary: Get clan info from an invite token (no auth required)
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Clan preview for the invite
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InviteClanPreview"
+        "404":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /invite/{token}/join:
+    post:
+      operationId: joinViaInvite
+      tags: [invite]
+      summary: Join a clan via invite link (auto-approved)
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Joined
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClanMember"
+        "409":
+          description: Already a member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Discord ───────────────────────────────────────────────────────────────
+  /clans/{clanId}/discord/channels:
+    get:
+      operationId: listDiscordChannels
+      tags: [discord]
+      summary: List text channels in the clan Discord server (requires bot to be in the server)
+      parameters:
+        - $ref: "#/components/parameters/ClanId"
+      responses:
+        "200":
+          description: Discord channels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DiscordChannel"
+        "400":
+          description: Bot not in server or no server configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /clans/{clanId}/discord/roles:
+    get:
+      operationId: listDiscordRoles
+      tags: [discord]
+      summary: List roles in the clan Discord server (requires bot to be in the server)
+      parameters:
+        - $ref: "#/components/parameters/ClanId"
+      responses:
+        "200":
+          description: Discord roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DiscordRole"
+        "400":
+          description: Bot not in server or no server configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Alerts ────────────────────────────────────────────────────────────────
+  /clans/{clanId}/alerts:
+    get:
+      operationId: listAlerts
+      tags: [alerts]
+      summary: List recent raid alerts for a clan
+      parameters:
+        - $ref: "#/components/parameters/ClanId"
+      responses:
+        "200":
+          description: Recent alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AlertEntry"
+
+  /clans/{clanId}/alerts/test:
+    post:
+      operationId: sendTestAlert
+      tags: [alerts]
+      summary: Fire a test raid alert for the clan (leader only)
+      parameters:
+        - $ref: "#/components/parameters/ClanId"
+      responses:
+        "200":
+          description: Test alert sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertEntry"
+        "400":
+          description: Discord not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Push subscriptions ────────────────────────────────────────────────────
+  /clans/{clanId}/push-subscribe:
+    post:
+      operationId: pushSubscribe
+      tags: [push]
+      summary: Subscribe to web push notifications for a clan
+      parameters:
+        - $ref: "#/components/parameters/ClanId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PushSubscriptionInput"
+      responses:
+        "201":
+          description: Subscribed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+    delete:
+      operationId: pushUnsubscribe
+      tags: [push]
+      summary: Remove web push subscription for a clan
+      parameters:
+        - $ref: "#/components/parameters/ClanId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PushUnsubscribeInput"
+      responses:
+        "204":
+          description: Unsubscribed
+
+  /clans/{clanId}/push-vapid:
+    get:
+      operationId: getVapidKey
+      tags: [push]
+      summary: Get the VAPID public key for this clan push channel
+      parameters:
+        - $ref: "#/components/parameters/ClanId"
+      responses:
+        "200":
+          description: VAPID public key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VapidKeyInfo"
+
 components:
+  parameters:
+    ClanId:
+      name: clanId
+      in: path
+      required: true
+      schema:
+        type: integer
+
   schemas:
     HealthStatus:
       type: object
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required: [success]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        discordId:
+          type: string
+        username:
+          type: string
+        avatar:
+          type: ["string", "null"]
+      required: [id, discordId, username, avatar]
+
+    ClanSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        imageUrl:
+          type: ["string", "null"]
+        memberCount:
+          type: integer
+        isPrivate:
+          type: boolean
+        alertCount:
+          type: integer
+      required: [id, name, imageUrl, memberCount, isPrivate, alertCount]
+
+    Clan:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        imageUrl:
+          type: ["string", "null"]
+        leaderId:
+          type: integer
+        leaderUsername:
+          type: string
+        isPrivate:
+          type: boolean
+        discordServerId:
+          type: ["string", "null"]
+        discordChannelId:
+          type: ["string", "null"]
+        discordChannelName:
+          type: ["string", "null"]
+        pingRole:
+          type: string
+        memberCount:
+          type: integer
+        alertCount:
+          type: integer
+        lastAlertAt:
+          type: ["string", "null"]
+        myRole:
+          type: ["string", "null"]
+          description: The current user role in this clan or null if not a member
+        isSilenced:
+          type: boolean
+        hasRaidKey:
+          type: boolean
+        createdAt:
+          type: string
+      required:
+        - id
+        - name
+        - imageUrl
+        - leaderId
+        - leaderUsername
+        - isPrivate
+        - discordServerId
+        - discordChannelId
+        - discordChannelName
+        - pingRole
+        - memberCount
+        - alertCount
+        - lastAlertAt
+        - myRole
+        - isSilenced
+        - hasRaidKey
+        - createdAt
+
+    ClanInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 40
+        imageUrl:
+          type: string
+        isPrivate:
+          type: boolean
+      required: [name]
+
+    ClanUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 40
+        imageUrl:
+          type: string
+        isPrivate:
+          type: boolean
+        raidKey:
+          type: string
+        kaosApiKey:
+          type: string
+        discordServerId:
+          type: string
+        discordChannelId:
+          type: string
+        discordChannelName:
+          type: string
+        pingRole:
+          type: string
+
+    ClanMember:
+      type: object
+      properties:
+        userId:
+          type: integer
+        clanId:
+          type: integer
+        username:
+          type: string
+        avatar:
+          type: ["string", "null"]
+        role:
+          type: string
+          enum: [leader, member]
+        silenced:
+          type: boolean
+        joinedAt:
+          type: string
+      required: [userId, clanId, username, avatar, role, silenced, joinedAt]
+
+    MembershipUpdate:
+      type: object
+      properties:
+        silenced:
+          type: boolean
+
+    MyClanEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        imageUrl:
+          type: ["string", "null"]
+        role:
+          type: string
+          enum: [leader, member]
+        silenced:
+          type: boolean
+        memberCount:
+          type: integer
+        pendingRequestCount:
+          type: integer
+        lastAlertAt:
+          type: ["string", "null"]
+        alertCount:
+          type: integer
+        hasRaidKey:
+          type: boolean
+        discordConfigured:
+          type: boolean
+      required:
+        - id
+        - name
+        - imageUrl
+        - role
+        - silenced
+        - memberCount
+        - pendingRequestCount
+        - lastAlertAt
+        - alertCount
+        - hasRaidKey
+        - discordConfigured
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalClans:
+          type: integer
+        totalAlerts:
+          type: integer
+        recentAlerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/AlertEntry"
+        pendingRequests:
+          type: integer
+      required: [totalClans, totalAlerts, recentAlerts, pendingRequests]
+
+    JoinRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+        clanId:
+          type: integer
+        userId:
+          type: integer
+        username:
+          type: string
+        avatar:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        createdAt:
+          type: string
+      required: [id, clanId, userId, username, avatar, status, createdAt]
+
+    JoinRequestResolution:
+      type: object
+      properties:
+        action:
+          type: string
+          enum: [approve, reject]
+      required: [action]
+
+    InviteTokenInfo:
+      type: object
+      properties:
+        token:
+          type: string
+        url:
+          type: string
+      required: [token, url]
+
+    InviteClanPreview:
+      type: object
+      properties:
+        clanId:
+          type: integer
+        name:
+          type: string
+        imageUrl:
+          type: ["string", "null"]
+        memberCount:
+          type: integer
+        leaderUsername:
+          type: string
+      required: [clanId, name, imageUrl, memberCount, leaderUsername]
+
+    DiscordChannel:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+      required: [id, name]
+
+    DiscordRole:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        color:
+          type: integer
+      required: [id, name, color]
+
+    AlertEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        clanId:
+          type: integer
+        clanName:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        serverId:
+          type: ["string", "null"]
+        isTest:
+          type: boolean
+        createdAt:
+          type: string
+      required: [id, clanId, clanName, title, body, serverId, isTest, createdAt]
+
+    PushSubscriptionInput:
+      type: object
+      properties:
+        endpoint:
+          type: string
+        p256dh:
+          type: string
+        auth:
+          type: string
+      required: [endpoint, p256dh, auth]
+
+    PushUnsubscribeInput:
+      type: object
+      properties:
+        endpoint:
+          type: string
+      required: [endpoint]
+
+    VapidKeyInfo:
+      type: object
+      properties:
+        publicKey:
+          type: string
+      required: [publicKey]
