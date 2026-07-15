@@ -1,19 +1,27 @@
 import { useState } from 'react';
-import { useGetClan, useListAlerts, useListClanMembers } from '@workspace/api-client-react';
+import { useGetClan, useListAlerts, useListClanMembers, useSendTestAlert, getListAlertsQueryKey } from '@workspace/api-client-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'wouter';
-import { Loader2, Settings, Users, Bell, Activity, Clock, BellRing, BellOff } from 'lucide-react';
+import { Loader2, Settings, Users, Bell, Activity, Clock, BellRing, BellOff, FlaskConical, Download, X } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { useRaidSiren } from '@/hooks/use-raid-siren';
+import { useInstallPrompt } from '@/hooks/use-install-prompt';
+import { useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ClanDetail({ id }: { id: number }) {
   const { data: clan, isLoading: clanLoading } = useGetClan(id, { query: { enabled: !!id } });
   const { data: members, isLoading: membersLoading } = useListClanMembers(id, { query: { enabled: !!id } });
   const { data: alerts, isLoading: alertsLoading } = useListAlerts(id, { query: { enabled: !!id } });
   const siren = useRaidSiren(id);
+  const install = useInstallPrompt();
+  const sendTestAlert = useSendTestAlert();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [installDismissed, setInstallDismissed] = useState(false);
 
   const isLoading = clanLoading || membersLoading || alertsLoading;
 
@@ -30,8 +38,41 @@ export default function ClanDetail({ id }: { id: number }) {
   const isMember = clan.myRole !== null;
   const isLeader = clan.myRole === 'leader';
 
+  const handleTestAlert = () => {
+    sendTestAlert.mutate({ clanId: id }, {
+      onSuccess: () => {
+        toast({ title: 'Test alert sent', description: 'Check Discord and your phone.' });
+        queryClient.invalidateQueries({ queryKey: getListAlertsQueryKey(id) });
+      },
+      onError: (err: any) => {
+        toast({ title: 'Failed to send test alert', description: err?.error ?? 'Something went wrong.', variant: 'destructive' });
+      },
+    });
+  };
+
   return (
     <div className="space-y-6">
+      {/* Install banner */}
+      {isMember && install.canInstall && !installDismissed && (
+        <div className="flex items-center justify-between gap-4 px-4 py-3 border border-primary/40 bg-primary/10">
+          <div className="flex items-center gap-3 min-w-0">
+            <Download className="h-5 w-5 text-primary shrink-0" />
+            <div className="min-w-0">
+              <p className="font-bold text-sm">Add AVIV Clan+ to your home screen</p>
+              <p className="text-xs font-mono text-muted-foreground">Get instant raid alerts as push notifications.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button size="sm" onClick={install.install} disabled={install.isInstalling}>
+              {install.isInstalling ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Install'}
+            </Button>
+            <Button size="icon" variant="ghost" className="h-8 w-8" aria-label="Dismiss" onClick={() => setInstallDismissed(true)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="relative border border-border bg-card p-6 md:p-10 flex flex-col md:flex-row items-center md:items-end gap-6 overflow-hidden">
         <div className="absolute inset-0 bg-primary/5 z-0 pointer-events-none" />
@@ -59,6 +100,19 @@ export default function ClanDetail({ id }: { id: number }) {
               <Link href={`/clans/${clan.id}/settings`}>
                 <Settings className="mr-2 h-4 w-4" /> Settings
               </Link>
+            </Button>
+          )}
+          {isLeader && (
+            <Button
+              variant="outline"
+              className="w-full md:w-auto bg-background"
+              disabled={sendTestAlert.isPending}
+              onClick={handleTestAlert}
+            >
+              {sendTestAlert.isPending
+                ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                : <FlaskConical className="mr-2 h-4 w-4" />}
+              Send Test Alert
             </Button>
           )}
           {isMember && !isLeader && (
@@ -175,6 +229,20 @@ export default function ClanDetail({ id }: { id: number }) {
                   )}
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Install prompt (fallback for non-banner browsers like iOS Safari) */}
+          {isMember && !install.isInstalled && !install.canInstall && (
+            <div className="p-4 border border-border bg-card/50 space-y-2">
+              <div className="flex items-center gap-2">
+                <Download className="h-4 w-4 text-primary" />
+                <span className="font-bold text-sm">Add to Home Screen</span>
+              </div>
+              <p className="text-xs font-mono text-muted-foreground leading-relaxed">
+                On iPhone: tap the <span className="text-foreground font-medium">Share</span> button in Safari, then <span className="text-foreground font-medium">Add to Home Screen</span>.<br />
+                On Android: tap the browser menu and select <span className="text-foreground font-medium">Add to Home Screen</span>.
+              </p>
             </div>
           )}
         </div>
