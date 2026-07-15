@@ -5,8 +5,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'wouter';
-import { Loader2, Settings, ShieldAlert, Users, Radio, Activity, Clock, ShieldCheck } from 'lucide-react';
+import { Loader2, Settings, ShieldAlert, Users, Radio, Activity, Clock, ShieldCheck, BellRing, BellOff, Bell } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
+import { useRaidSiren } from '@/hooks/use-raid-siren';
 
 export default function ClanDetail({ id }: { id: number }) {
   const { data: clan, isLoading: clanLoading } = useGetClan(id, { query: { enabled: !!id } });
@@ -22,6 +23,8 @@ export default function ClanDetail({ id }: { id: number }) {
       </div>
     );
   }
+
+  const siren = useRaidSiren(id);
 
   if (!clan) return null;
 
@@ -66,6 +69,35 @@ export default function ClanDetail({ id }: { id: number }) {
             <Button variant="secondary" className="w-full md:w-auto pointer-events-none">
               ACTIVE OPERATIVE
             </Button>
+          )}
+          {isMember && siren.supported && !siren.checking && (
+            siren.subscribed ? (
+              <Button
+                variant="outline"
+                className="w-full md:w-auto bg-background"
+                disabled={siren.disabling}
+                onClick={() => siren.disable()}
+              >
+                {siren.disabling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BellRing className="mr-2 h-4 w-4 text-primary" />}
+                ALERTS ON
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full md:w-auto bg-background"
+                disabled={siren.enabling || siren.permission === 'denied'}
+                onClick={() => siren.enable()}
+              >
+                {siren.enabling ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : siren.permission === 'denied' ? (
+                  <BellOff className="mr-2 h-4 w-4" />
+                ) : (
+                  <Bell className="mr-2 h-4 w-4" />
+                )}
+                {siren.permission === 'denied' ? 'ALERTS BLOCKED' : 'ENABLE ALERTS'}
+              </Button>
+            )
           )}
         </div>
       </div>

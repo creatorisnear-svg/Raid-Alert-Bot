@@ -98,8 +98,10 @@ router.get("/auth/discord/callback", async (req, res): Promise<void> => {
     );
 
     const next = typeof state === "string" && state.startsWith("/") ? state : "/dashboard";
-    const frontendBase = APP_URL.replace(/\/api$/, "");
-    res.redirect(`${frontendBase}/aviv-clan-plus${next}`);
+    // The combined production service serves the frontend at the root path
+    // (not under /aviv-clan-plus — that prefix only applied to the old
+    // Replit-artifact routing setup), so redirect straight to APP_URL + next.
+    res.redirect(`${APP_URL}${next}`);
   } catch (err) {
     req.log.error({ err }, "Discord OAuth error");
     res.status(500).json({ error: "Internal server error" });
