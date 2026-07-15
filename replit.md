@@ -209,6 +209,22 @@ the user is building; separate from the raid-alert-bot above):**
   instead of any stubs, connecting the frontend pages to the API server) is
   proposed as a follow-up task — see project tasks.
 
+## 2026-07-15 TypeScript / build health pass
+
+- Ran `pnpm install` at repo root — all three artifact workflows
+  (`api-server`, `aviv-clan-plus`, `mockup-sandbox`) now start cleanly.
+- Built `lib/db` and `lib/api-zod` via `tsc -b` (they are TypeScript project
+  references with `composite: true`; their `dist/` had never been generated).
+  This cleared all TS6305 "stale artifact" errors across `api-server`.
+- Added `artifacts/api-server/src/lib/pushListener.ts` — a typed stub that
+  satisfies the dynamic `import("./pushListener.js")` in `raidListenerManager.ts`.
+  The stub throws at runtime (caught gracefully by the existing try/catch);
+  no pre-existing behavior changed. See the stub's JSDoc for how to flesh it
+  out if in-process push listening is wanted from the api-server later.
+- Built `raid-alert-bot` (`npm run build` → `tsc`) — compiles clean.
+- `pnpm --filter @workspace/api-server exec tsc --noEmit` now exits 0 with
+  zero errors. All workflows verified running (screenshot confirms landing page).
+
 ## 2026-07-15 legal, accessibility, and mobile pass (AVIV Clan+ website)
 
 - Added `/terms` and `/privacy` pages (`src/pages/legal/terms.tsx`,
