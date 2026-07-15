@@ -52,8 +52,10 @@ export default function SearchClans() {
       </div>
 
       <div className="relative">
-        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
+        <label htmlFor="clan-search" className="sr-only">Search for a clan by name</label>
         <Input 
+          id="clan-search"
           className="pl-10 h-12 text-lg font-mono rounded-none border-primary/50 focus-visible:ring-primary/50" 
           placeholder="ENTER DESIGNATION..." 
           value={query}
@@ -74,7 +76,7 @@ export default function SearchClans() {
                   <div className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <Avatar className="h-12 w-12 rounded-none border border-border">
-                        <AvatarImage src={clan.imageUrl || undefined} />
+                        <AvatarImage src={clan.imageUrl || undefined} alt={`${clan.name} emblem`} />
                         <AvatarFallback className="bg-accent font-display rounded-none text-accent-foreground">
                           {clan.name.substring(0, 2).toUpperCase()}
                         </AvatarFallback>

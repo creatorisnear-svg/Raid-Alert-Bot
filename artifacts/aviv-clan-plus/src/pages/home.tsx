@@ -2,12 +2,19 @@ import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { ShieldAlert, Zap, RadioReceiver, ShieldCheck, ChevronRight } from 'lucide-react';
 import { useGetMe } from '@workspace/api-client-react';
+import { SiteFooter } from '@/components/site-footer';
 
 export default function Home() {
   const { data: user, isLoading } = useGetMe({ query: { retry: false } });
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground flex flex-col relative overflow-hidden">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:rounded"
+      >
+        Skip to content
+      </a>
       {/* Tactical background grid */}
       <div className="absolute inset-0 pointer-events-none opacity-20 z-0" style={{
         backgroundImage: 'linear-gradient(hsl(var(--primary)/0.2) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary)/0.2) 1px, transparent 1px)',
@@ -40,14 +47,14 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <main className="flex-1 flex flex-col relative z-10">
+      <main id="main-content" className="flex-1 flex flex-col relative z-10">
         <section className="px-6 py-24 md:py-32 flex flex-col items-center text-center max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-none border border-primary/30 bg-primary/10 text-primary mb-8 animate-pulse">
             <RadioReceiver className="h-4 w-4" />
             <span className="font-mono text-xs font-bold tracking-widest uppercase">System Online</span>
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-display font-bold tracking-widest uppercase leading-tight mb-6">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-display font-bold tracking-wide sm:tracking-widest uppercase leading-tight mb-6 break-words">
             Raid Alerts <br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-amber-500">Perfected</span>
           </h1>
@@ -115,13 +122,8 @@ export default function Home() {
           </div>
         </section>
       </main>
-      
-      <footer className="px-6 py-8 border-t border-border bg-background text-center flex flex-col items-center">
-        <ShieldAlert className="h-6 w-6 text-muted-foreground mb-4" />
-        <p className="font-mono text-xs text-muted-foreground tracking-widest uppercase">
-          AVIV Clan Network
-        </p>
-      </footer>
+
+      <SiteFooter />
     </div>
   );
 }

@@ -12,6 +12,8 @@ import SearchClans from '@/pages/search';
 import ClanDetail from '@/pages/clans/detail';
 import ClanSettings from '@/pages/clans/settings';
 import InviteJoin from '@/pages/invite';
+import Terms from '@/pages/legal/terms';
+import Privacy from '@/pages/legal/privacy';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,6 +29,8 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/invite/:token" component={InviteJoin} />
+      <Route path="/terms" component={Terms} />
+      <Route path="/privacy" component={Privacy} />
       <Route path="/dashboard">
         <AppLayout><Dashboard /></AppLayout>
       </Route>

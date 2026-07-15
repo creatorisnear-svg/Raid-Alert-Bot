@@ -208,3 +208,37 @@ the user is building; separate from the raid-alert-bot above):**
   Continuing that build-out (auth wiring, clan CRUD end-to-end, real data
   instead of any stubs, connecting the frontend pages to the API server) is
   proposed as a follow-up task — see project tasks.
+
+## 2026-07-15 legal, accessibility, and mobile pass (AVIV Clan+ website)
+
+- Added `/terms` and `/privacy` pages (`src/pages/legal/terms.tsx`,
+  `src/pages/legal/privacy.tsx`), wired into `App.tsx`. Content covers GDPR
+  (EU/UK) and CCPA/CPRA (US) — data collected, legal basis, cookies (one
+  essential session cookie only, no consent banner needed), user rights
+  (access/delete/export/object), children's privacy, and an accessibility
+  commitment section. **This is good-faith boilerplate, not legal advice** —
+  if the user has an EU or US entity, a lawyer should review before relying
+  on it for real compliance obligations (e.g. a formal Data Processing
+  Agreement with hosting/Discord, or a DPO if required).
+- Support email `creatorisnear@gmail.com` is now surfced sitewide via a new
+  `SiteFooter` component (`src/components/site-footer.tsx`, exports
+  `SUPPORT_EMAIL`) — footer nav on the home page links to Terms, Privacy, and
+  a `mailto:` support link, plus a disclaimer that AVIV Clan+ is unaffiliated
+  with Facepunch/Rust/KAOS+/Discord. The same email is referenced in the
+  legal pages' contact sections.
+- Accessibility (WCAG-oriented) pass: "Skip to content" links on the home
+  page, legal pages, and authenticated app layout; `aria-label`s on icon-only
+  buttons (mobile menu trigger, approve/reject join-request buttons); `alt`
+  text on all clan/user avatar images; a visually-hidden `<label>` added to
+  the clan search input. Not a full WCAG audit — no automated screen-reader
+  testing was performed.
+- Mobile fix: the home page hero headline ("Raid Alerts Perfected") was
+  overflowing horizontally on narrow phones (iPhone/Android widths ~360–412px)
+  because of a fixed `text-5xl` + `tracking-widest` combo. Fixed with
+  responsive sizing (`text-4xl sm:text-5xl md:text-7xl`,
+  `tracking-wide sm:tracking-widest`, `break-words`). Verified visually at
+  390×844 (iPhone) and 412×915 (Samsung-class) viewports — home, `/terms`,
+  and `/privacy` all render cleanly with no clipped or overflowing content.
+  Authenticated pages (dashboard/search/clan pages) were not re-screenshotted
+  (they require a Discord login) but already used responsive Tailwind
+  classes (`grid-cols-1 md:...`, `flex-col md:flex-row`) prior to this pass.

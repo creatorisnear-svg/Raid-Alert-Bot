@@ -211,7 +211,7 @@ export default function ClanSettings({ id }: { id: number }) {
                 <div key={req.id} className="flex items-center justify-between p-3 border border-border bg-background">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-8 w-8 rounded-none">
-                      <AvatarImage src={req.avatar || undefined} />
+                      <AvatarImage src={req.avatar || undefined} alt={`${req.username}'s avatar`} />
                       <AvatarFallback className="rounded-none bg-accent">{req.username.substring(0,2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div>
@@ -220,11 +220,11 @@ export default function ClanSettings({ id }: { id: number }) {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="icon" variant="outline" className="h-8 w-8 text-primary border-primary/50 hover:bg-primary/10" onClick={() => handleResolveRequest(req.id, 'approve')}>
-                      <Check className="h-4 w-4" />
+                    <Button size="icon" variant="outline" aria-label={`Approve ${req.username}'s join request`} className="h-8 w-8 text-primary border-primary/50 hover:bg-primary/10" onClick={() => handleResolveRequest(req.id, 'approve')}>
+                      <Check className="h-4 w-4" aria-hidden="true" />
                     </Button>
-                    <Button size="icon" variant="outline" className="h-8 w-8 text-destructive border-destructive/50 hover:bg-destructive/10" onClick={() => handleResolveRequest(req.id, 'reject')}>
-                      <X className="h-4 w-4" />
+                    <Button size="icon" variant="outline" aria-label={`Reject ${req.username}'s join request`} className="h-8 w-8 text-destructive border-destructive/50 hover:bg-destructive/10" onClick={() => handleResolveRequest(req.id, 'reject')}>
+                      <X className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   </div>
                 </div>

@@ -65,7 +65,7 @@ export default function InviteJoin({ token }: { token: string }) {
       <Card className="max-w-md w-full relative z-10 border-primary/30 shadow-xl shadow-primary/5">
         <CardHeader className="text-center pb-0 pt-8">
           <Avatar className="h-24 w-24 mx-auto mb-4 rounded-none border-2 border-border">
-            <AvatarImage src={invite.imageUrl || undefined} />
+            <AvatarImage src={invite.imageUrl || undefined} alt={`${invite.name} emblem`} />
             <AvatarFallback className="rounded-none bg-accent font-display text-2xl">{invite.name.substring(0,2).toUpperCase()}</AvatarFallback>
           </Avatar>
           <div className="text-xs font-mono tracking-widest text-primary mb-1 uppercase">Clearance Request</div>

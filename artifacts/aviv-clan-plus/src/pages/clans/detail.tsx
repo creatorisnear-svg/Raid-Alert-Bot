@@ -38,7 +38,7 @@ export default function ClanDetail({ id }: { id: number }) {
         </div>
         
         <Avatar className="h-32 w-32 rounded-none border-4 border-background z-10 shadow-lg">
-          <AvatarImage src={clan.imageUrl || undefined} />
+          <AvatarImage src={clan.imageUrl || undefined} alt={`${clan.name} emblem`} />
           <AvatarFallback className="rounded-none bg-accent font-display text-4xl">{clan.name.substring(0, 2).toUpperCase()}</AvatarFallback>
         </Avatar>
 
@@ -133,7 +133,7 @@ export default function ClanDetail({ id }: { id: number }) {
                 <div key={member.userId} className={`p-3 flex items-center justify-between ${i !== members.length - 1 ? 'border-b border-border/50' : ''}`}>
                   <div className="flex items-center gap-3">
                     <Avatar className="h-8 w-8 rounded-none">
-                      <AvatarImage src={member.avatar || undefined} />
+                      <AvatarImage src={member.avatar || undefined} alt={`${member.username}'s avatar`} />
                       <AvatarFallback className="rounded-none bg-accent text-xs font-display">{member.username.substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div>

@@ -58,6 +58,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:rounded"
+      >
+        Skip to content
+      </a>
       {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card sticky top-0 z-50">
         <Link href="/dashboard" className="flex items-center gap-2">
@@ -66,8 +72,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </Link>
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Menu className="h-6 w-6" />
+            <Button variant="ghost" size="icon" aria-label="Open navigation menu">
+              <Menu className="h-6 w-6" aria-hidden="true" />
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-[80vw] bg-card border-r border-border p-0 flex flex-col">
@@ -78,7 +84,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
               <div className="flex items-center gap-4">
                 <Avatar className="h-12 w-12 border-2 border-primary/20">
-                  <AvatarImage src={user.avatar || undefined} />
+                  <AvatarImage src={user.avatar || undefined} alt={`${user.username}'s avatar`} />
                   <AvatarFallback className="bg-accent text-accent-foreground font-display">{user.username.substring(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div>
@@ -121,7 +127,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="p-4 border-t border-border">
           <div className="flex items-center gap-3 p-2 mb-4 bg-accent/50 rounded clip-edges">
             <Avatar className="h-10 w-10 rounded-sm">
-              <AvatarImage src={user.avatar || undefined} />
+              <AvatarImage src={user.avatar || undefined} alt={`${user.username}'s avatar`} />
               <AvatarFallback className="bg-background font-display rounded-sm">{user.username.substring(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
             <div className="overflow-hidden">
@@ -142,7 +148,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           backgroundImage: 'radial-gradient(circle at 1px 1px, hsl(var(--muted-foreground)) 1px, transparent 0)',
           backgroundSize: '32px 32px'
         }}></div>
-        <div className="max-w-6xl mx-auto p-4 md:p-8 relative z-10">
+        <div id="main-content" className="max-w-6xl mx-auto p-4 md:p-8 relative z-10">
           {children}
         </div>
       </main>
