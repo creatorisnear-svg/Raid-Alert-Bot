@@ -22,9 +22,27 @@ export default function ClanDetail({ id }: { id: number }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const [dismissedIds, setDismissedIds] = useState<Set<number>>(new Set());
-  const dismissAlert = (alertId: number) => setDismissedIds(prev => new Set(prev).add(alertId));
-  const clearAllAlerts = () => setDismissedIds(new Set((alerts ?? []).map(a => a.id)));
+  const storageKey = `dismissed-alerts-${id}`;
+  const [dismissedIds, setDismissedIds] = useState<Set<number>>(() => {
+    try {
+      const stored = localStorage.getItem(storageKey);
+      return stored ? new Set<number>(JSON.parse(stored)) : new Set<number>();
+    } catch {
+      return new Set<number>();
+    }
+  });
+
+  const dismissAlert = (alertId: number) => setDismissedIds(prev => {
+    const next = new Set(prev).add(alertId);
+    localStorage.setItem(storageKey, JSON.stringify([...next]));
+    return next;
+  });
+
+  const clearAllAlerts = () => {
+    const next = new Set<number>((alerts ?? []).map(a => a.id));
+    localStorage.setItem(storageKey, JSON.stringify([...next]));
+    setDismissedIds(next);
+  };
 
   const [showJoinBanner, setShowJoinBanner] = useState(false);
   useEffect(() => {
