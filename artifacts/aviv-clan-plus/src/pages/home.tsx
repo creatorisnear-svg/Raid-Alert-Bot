@@ -1,6 +1,7 @@
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { ShieldAlert, Zap, RadioReceiver, ShieldCheck, ChevronRight } from 'lucide-react';
+import { Zap, RadioReceiver, ShieldCheck, ChevronRight } from 'lucide-react';
+import logoUrl from '@/assets/logo.png';
 import { useGetMe } from '@workspace/api-client-react';
 import { SiteFooter } from '@/components/site-footer';
 
@@ -25,7 +26,7 @@ export default function Home() {
       {/* Header */}
       <header className="px-6 py-6 flex items-center justify-between border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-50">
         <div className="flex items-center gap-3">
-          <ShieldAlert className="h-8 w-8 text-primary" />
+          <img src={logoUrl} alt="AVIV Clan+ logo" className="h-9 w-9 object-contain" />
           <span className="font-display font-bold text-xl tracking-[0.2em]">AVIV<span className="text-primary">+</span></span>
         </div>
         <div>

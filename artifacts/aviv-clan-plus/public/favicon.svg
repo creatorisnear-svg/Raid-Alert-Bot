@@ -1,3 +1,7 @@
 <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="180" height="180" rx="36" fill="#FF3C00"/>
+  <rect width="180" height="180" rx="36" fill="#0b0e0b"/>
+  <!-- Shield outline -->
+  <path d="M90 18 L152 44 L152 96 C152 130 120 158 90 166 C60 158 28 130 28 96 L28 44 Z" fill="none" stroke="#FF4500" stroke-width="8" stroke-linejoin="round"/>
+  <!-- Lightning bolt -->
+  <path d="M100 52 L78 92 L94 92 L80 132 L108 82 L92 82 Z" fill="#FF4500"/>
 </svg>

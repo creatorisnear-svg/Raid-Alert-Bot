@@ -1,6 +1,7 @@
 import { useGetMe } from '@workspace/api-client-react';
 import { Link, useLocation } from 'wouter';
-import { Loader2, ShieldAlert, Crosshair, Users, Search, Menu, LogOut, ChevronRight } from 'lucide-react';
+import { Loader2, Crosshair, Users, Search, Menu, LogOut, ChevronRight } from 'lucide-react';
+import logoUrl from '@/assets/logo.png';
 import { Button } from './ui/button';
 import { useLogout } from '@workspace/api-client-react';
 import { useState } from 'react';
@@ -67,7 +68,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card sticky top-0 z-50">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <ShieldAlert className="h-6 w-6 text-primary" />
+          <img src={logoUrl} alt="AVIV Clan+ logo" className="h-7 w-7 object-contain" />
           <span className="font-display font-bold tracking-widest">AVIV</span>
         </Link>
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -79,7 +80,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <SheetContent side="left" className="w-[80vw] bg-card border-r border-border p-0 flex flex-col">
             <div className="p-6 border-b border-border">
               <div className="flex items-center gap-2 mb-8">
-                <ShieldAlert className="h-8 w-8 text-primary" />
+                <img src={logoUrl} alt="AVIV Clan+ logo" className="h-9 w-9 object-contain" />
                 <span className="font-display font-bold text-xl tracking-widest">AVIV CLAN+</span>
               </div>
               <div className="flex items-center gap-4">
@@ -111,7 +112,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="p-6 border-b border-border">
           <Link href="/dashboard" className="flex items-center gap-3 group cursor-pointer">
             <div className="bg-primary/10 p-2 rounded clip-edges group-hover:bg-primary/20 transition-colors">
-              <ShieldAlert className="h-6 w-6 text-primary" />
+              <img src={logoUrl} alt="AVIV Clan+ logo" className="h-6 w-6 object-contain" />
             </div>
             <div>
               <span className="block font-display font-bold tracking-widest leading-none">AVIV</span>
