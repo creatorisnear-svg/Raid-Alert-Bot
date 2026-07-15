@@ -29,7 +29,9 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/invite/:token" component={InviteJoin} />
+      <Route path="/invite/:token">
+        {params => <InviteJoin token={params.token} />}
+      </Route>
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />
       <Route path="/dashboard">

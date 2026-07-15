@@ -1,0 +1,72 @@
+Instance created. Preparing to start...
+(node:1) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"level":30,"time":1784109708787,"pid":1,"hostname":"fc008e00","msg":"Web push VAPID configured"}
+Instance is starting... Waiting for health checks to pass.
+{"level":30,"time":1784109731737,"pid":1,"hostname":"fc008e00","port":8080,"msg":"Server listening"}
+Instance is healthy. All health checks are passing.
+{"level":30,"time":1784109757708,"pid":1,"hostname":"fc008e00","req":{"id":1,"method":"GET","url":"/api/auth/me"},"res":{"statusCode":304},"responseTime":158,"msg":"request completed"}
+{"level":30,"time":1784109757757,"pid":1,"hostname":"fc008e00","req":{"id":2,"method":"GET","url":"/manifest.json"},"res":{"statusCode":200},"responseTime":8,"msg":"request completed"}
+{"level":30,"time":1784109757903,"pid":1,"hostname":"fc008e00","req":{"id":3,"method":"GET","url":"/api/clans/1/join-requests"},"res":{"statusCode":304},"responseTime":32,"msg":"request completed"}
+{"level":30,"time":1784109757973,"pid":1,"hostname":"fc008e00","req":{"id":4,"method":"GET","url":"/api/clans/1"},"res":{"statusCode":304},"responseTime":93,"msg":"request completed"}
+{"level":30,"time":1784109758201,"pid":1,"hostname":"fc008e00","req":{"id":5,"method":"GET","url":"/api/clans/1/invite-token"},"res":{"statusCode":304},"responseTime":320,"msg":"request completed"}
+{"level":30,"time":1784109759081,"pid":1,"hostname":"fc008e00","req":{"id":6,"method":"GET","url":"/api/clans/1/discord/roles"},"res":{"statusCode":304},"responseTime":223,"msg":"request completed"}
+{"level":30,"time":1784109759096,"pid":1,"hostname":"fc008e00","req":{"id":7,"method":"GET","url":"/api/clans/1/discord/channels"},"res":{"statusCode":304},"responseTime":236,"msg":"request completed"}
+{"level":30,"time":1784109759633,"pid":1,"hostname":"fc008e00","req":{"id":8,"method":"GET","url":"/sw.js"},"res":{"statusCode":200},"responseTime":15,"msg":"request completed"}
+{"level":30,"time":1784109760727,"pid":1,"hostname":"fc008e00","req":{"id":9,"method":"GET","url":"/clans/1/settings"},"res":{"statusCode":200},"responseTime":17,"msg":"request completed"}
+{"level":30,"time":1784109761011,"pid":1,"hostname":"fc008e00","req":{"id":10,"method":"GET","url":"/assets/index-C0uSWI5T.js"},"res":{"statusCode":200},"responseTime":19,"msg":"request completed"}
+{"level":30,"time":1784109761018,"pid":1,"hostname":"fc008e00","req":{"id":11,"method":"GET","url":"/assets/index-CIXT8dZP.css"},"res":{"statusCode":200},"responseTime":13,"msg":"request completed"}
+{"level":30,"time":1784109761474,"pid":1,"hostname":"fc008e00","req":{"id":12,"method":"GET","url":"/manifest.json"},"res":{"statusCode":304},"responseTime":2,"msg":"request completed"}
+{"level":30,"time":1784109761489,"pid":1,"hostname":"fc008e00","req":{"id":13,"method":"GET","url":"/api/auth/me"},"res":{"statusCode":304},"responseTime":14,"msg":"request completed"}
+{"level":30,"time":1784109761665,"pid":1,"hostname":"fc008e00","req":{"id":14,"method":"GET","url":"/api/clans/1/invite-token"},"res":{"statusCode":304},"responseTime":17,"msg":"request completed"}
+{"level":30,"time":1784109761674,"pid":1,"hostname":"fc008e00","req":{"id":15,"method":"GET","url":"/api/clans/1/join-requests"},"res":{"statusCode":304},"responseTime":24,"msg":"request completed"}
+{"level":30,"time":1784109761688,"pid":1,"hostname":"fc008e00","req":{"id":16,"method":"GET","url":"/api/clans/1"},"res":{"statusCode":304},"responseTime":30,"msg":"request completed"}
+{"level":30,"time":1784109761965,"pid":1,"hostname":"fc008e00","req":{"id":18,"method":"GET","url":"/api/clans/1/discord/channels"},"res":{"statusCode":304},"responseTime":115,"msg":"request completed"}
+{"level":30,"time":1784109761966,"pid":1,"hostname":"fc008e00","req":{"id":17,"method":"GET","url":"/api/clans/1/discord/roles"},"res":{"statusCode":304},"responseTime":117,"msg":"request completed"}
+{"level":30,"time":1784109763247,"pid":1,"hostname":"fc008e00","req":{"id":20,"method":"GET","url":"/api/clans/1/members"},"res":{"statusCode":304},"responseTime":13,"msg":"request completed"}
+{"level":30,"time":1784109763262,"pid":1,"hostname":"fc008e00","req":{"id":21,"method":"GET","url":"/api/clans/1/alerts"},"res":{"statusCode":304},"responseTime":21,"msg":"request completed"}
+{"level":30,"time":1784109763265,"pid":1,"hostname":"fc008e00","req":{"id":22,"method":"GET","url":"/api/clans/1/push-vapid"},"res":{"statusCode":304},"responseTime":8,"msg":"request completed"}
+{"level":30,"time":1784109763274,"pid":1,"hostname":"fc008e00","req":{"id":19,"method":"GET","url":"/api/clans/1"},"res":{"statusCode":304},"responseTime":44,"msg":"request completed"}
+{"level":30,"time":1784109763694,"pid":1,"hostname":"fc008e00","req":{"id":23,"method":"GET","url":"/sw.js"},"res":{"statusCode":200},"responseTime":14,"msg":"request completed"}
+{"level":30,"time":1784109766521,"pid":1,"hostname":"fc008e00","req":{"id":26,"method":"GET","url":"/api/clans/1/invite-token"},"res":{"statusCode":304},"responseTime":27,"msg":"request completed"}
+{"level":30,"time":1784109766550,"pid":1,"hostname":"fc008e00","req":{"id":24,"method":"GET","url":"/api/clans/1"},"res":{"statusCode":304},"responseTime":58,"msg":"request completed"}
+{"level":30,"time":1784109766551,"pid":1,"hostname":"fc008e00","req":{"id":27,"method":"GET","url":"/api/clans/1/join-requests"},"res":{"statusCode":304},"responseTime":56,"msg":"request completed"}
+{"level":30,"time":1784109766615,"pid":1,"hostname":"fc008e00","req":{"id":25,"method":"GET","url":"/api/clans/1/discord/roles"},"res":{"statusCode":304},"responseTime":122,"msg":"request completed"}
+{"level":30,"time":1784109766643,"pid":1,"hostname":"fc008e00","req":{"id":28,"method":"GET","url":"/api/clans/1/discord/channels"},"res":{"statusCode":304},"responseTime":147,"msg":"request completed"}
+{"level":30,"time":1784109771361,"pid":1,"hostname":"fc008e00","req":{"id":29,"method":"GET","url":"/"},"res":{"statusCode":200},"responseTime":2,"msg":"request completed"}
+{"level":30,"time":1784109771544,"pid":1,"hostname":"fc008e00","req":{"id":30,"method":"GET","url":"/assets/index-C0uSWI5T.js"},"res":{"statusCode":304},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1784109771550,"pid":1,"hostname":"fc008e00","req":{"id":31,"method":"GET","url":"/assets/index-CIXT8dZP.css"},"res":{"statusCode":304},"responseTime":2,"msg":"request completed"}
+{"level":30,"time":1784109772035,"pid":1,"hostname":"fc008e00","req":{"id":32,"method":"GET","url":"/api/auth/me"},"res":{"statusCode":401},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1784109772183,"pid":1,"hostname":"fc008e00","req":{"id":33,"method":"GET","url":"/manifest.json"},"res":{"statusCode":200},"responseTime":2,"msg":"request completed"}
+{"level":30,"time":1784109780962,"pid":1,"hostname":"fc008e00","req":{"id":34,"method":"GET","url":"/invite/751056e510f377dc5ad8f920ae9622f5"},"res":{"statusCode":200},"responseTime":2,"msg":"request completed"}
+{"level":30,"time":1784109781197,"pid":1,"hostname":"fc008e00","req":{"id":35,"method":"GET","url":"/api/auth/me"},"res":{"statusCode":401},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1784109781206,"pid":1,"hostname":"fc008e00","req":{"id":36,"method":"GET","url":"/manifest.json"},"res":{"statusCode":304},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1784109782555,"pid":1,"hostname":"fc008e00","req":{"id":37,"method":"GET","url":"/"},"res":{"statusCode":304},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1784109782770,"pid":1,"hostname":"fc008e00","req":{"id":38,"method":"GET","url":"/api/auth/me"},"res":{"statusCode":401},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1784109782793,"pid":1,"hostname":"fc008e00","req":{"id":39,"method":"GET","url":"/manifest.json"},"res":{"statusCode":304},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1784109788966,"pid":1,"hostname":"fc008e00","req":{"id":40,"method":"POST","url":"/api/clans/1/invite-token"},"res":{"statusCode":200},"responseTime":50,"msg":"request completed"}
+{"level":30,"time":1784109789125,"pid":1,"hostname":"fc008e00","req":{"id":41,"method":"GET","url":"/api/clans/1/invite-token"},"res":{"statusCode":200},"responseTime":15,"msg":"request completed"}
+{"level":30,"time":1784109793788,"pid":1,"hostname":"fc008e00","req":{"id":42,"method":"POST","url":"/api/clans/1/invite-token"},"res":{"statusCode":200},"responseTime":19,"msg":"request completed"}
+{"level":30,"time":1784109793952,"pid":1,"hostname":"fc008e00","req":{"id":43,"method":"GET","url":"/api/clans/1/invite-token"},"res":{"statusCode":200},"responseTime":15,"msg":"request completed"}
+{"level":30,"time":1784109807886,"pid":1,"hostname":"fc008e00","req":{"id":44,"method":"GET","url":"/invite/f45195a5f6c9e6fce0b53b15d3b6e299"},"res":{"statusCode":200},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1784109816840,"pid":1,"hostname":"fc008e00","req":{"id":45,"method":"GET","url":"/invite/f45195a5f6c9e6fce0b53b15d3b6e299"},"res":{"statusCode":200},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1784109817074,"pid":1,"hostname":"fc008e00","req":{"id":46,"method":"GET","url":"/api/auth/me"},"res":{"statusCode":401},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1784109817140,"pid":1,"hostname":"fc008e00","req":{"id":47,"method":"GET","url":"/manifest.json"},"res":{"statusCode":304},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1784109818717,"pid":1,"hostname":"fc008e00","req":{"id":48,"method":"GET","url":"/"},"res":{"statusCode":304},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1784109818911,"pid":1,"hostname":"fc008e00","req":{"id":49,"method":"GET","url":"/api/auth/me"},"res":{"statusCode":401},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1784109818928,"pid":1,"hostname":"fc008e00","req":{"id":50,"method":"GET","url":"/manifest.json"},"res":{"statusCode":304},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1784109824455,"pid":1,"hostname":"fc008e00","req":{"id":51,"method":"GET","url":"/invite/f45195a5f6c9e6fce0b53b15d3b6e299"},"res":{"statusCode":200},"responseTime":114,"msg":"request completed"}
+{"level":30,"time":1784109824841,"pid":1,"hostname":"fc008e00","req":{"id":53,"method":"GET","url":"/manifest.json"},"res":{"statusCode":304},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1784109824844,"pid":1,"hostname":"fc008e00","req":{"id":52,"method":"GET","url":"/api/auth/me"},"res":{"statusCode":304},"responseTime":90,"msg":"request completed"}
+{"level":30,"time":1784109826084,"pid":1,"hostname":"fc008e00","req":{"id":54,"method":"GET","url":"/"},"res":{"statusCode":200},"responseTime":13,"msg":"request completed"}
+{"level":30,"time":1784109826268,"pid":1,"hostname":"fc008e00","req":{"id":55,"method":"GET","url":"/api/auth/me"},"res":{"statusCode":304},"responseTime":12,"msg":"request completed"}
+{"level":30,"time":1784109826280,"pid":1,"hostname":"fc008e00","req":{"id":56,"method":"GET","url":"/manifest.json"},"res":{"statusCode":304},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1784109826690,"pid":1,"hostname":"fc008e00","req":{"id":57,"method":"GET","url":"/sw.js"},"res":{"statusCode":200},"responseTime":9,"msg":"request completed"}
+{"level":30,"time":1784109827806,"pid":1,"hostname":"fc008e00","req":{"id":58,"method":"GET","url":"/sw.js"},"res":{"statusCode":304},"responseTime":9,"msg":"request completed"}
