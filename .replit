@@ -45,7 +45,7 @@ timeoutMs = 20000
 [userenv.shared]
 PING_TARGET = "everyone"
 VAPID_CONTACT_EMAIL = "admin@avivclanplus.app"
-VAPID_PUBLIC_KEY = "BLNJGUf5ehWRFLy9HbblreTsYpeSq9mUMZR2jUXIRnR_4B9CVvToUEdWv4VEgIVbWxnTo_J2zk32V5aDReiP3Lo"
+VAPID_PUBLIC_KEY = "BGHyUcfzqz4HyIrllybYYo4cLOuPfQVCNfzUo0yIib9x4k1gyJ5uqANt9-7h6KrGn0ZxxycXuDY38OH11QgT-FY"
 APP_URL = "https://bf19f7ef-4c7e-420b-986d-b6d1e61948e5-00-1wtndafa02qj3.kirk.replit.dev"
 
 [nix]
