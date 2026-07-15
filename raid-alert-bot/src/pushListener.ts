@@ -154,11 +154,25 @@ export async function startPushListener(
 
   let connected = false;
   let lastEventAt: Date | null = null;
+  let lastActivityAt: Date = new Date();
 
   const instance = new PushReceiver(receiverConfig as never);
 
+  // Any protocol-level activity (heartbeat or message) proves the socket is
+  // actually alive end-to-end -- used for the watchdog below, since real
+  // raid alerts can be hours/days apart and we can't rely on them alone to
+  // notice a silently-dead connection.
+  const markActivity = () => {
+    lastActivityAt = new Date();
+  };
+
+  // Logs every raw push the socket receives, even ones that don't look like
+  // a raid alert, so we can tell "connection is dead" apart from "connection
+  // is alive but KAOS never sent anything" when debugging missed alerts.
   instance.onNotification((n: unknown) => {
+    markActivity();
     lastEventAt = new Date();
+    console.log("Raw push notification received:", JSON.stringify(n));
     try {
       const envelope = n as { message?: { title?: string; body?: string; data?: Record<string, unknown> } };
       const message = envelope.message || {};
@@ -175,15 +189,45 @@ export async function startPushListener(
 
   instance.on("ON_CONNECT", () => {
     connected = true;
-    console.log("Connected to Google push infrastructure.");
+    markActivity();
+    console.log(`[${new Date().toISOString()}] Connected to Google push infrastructure.`);
   });
   instance.on("ON_DISCONNECT", () => {
     connected = false;
-    console.warn("Disconnected from Google push infrastructure -- library will auto-retry.");
+    console.warn(`[${new Date().toISOString()}] Disconnected from Google push infrastructure -- library will auto-retry.`);
+  });
+  instance.on("ON_HEARTBEAT", () => {
+    markActivity();
+    console.log(`[${new Date().toISOString()}] Heartbeat OK (connection alive).`);
+  });
+  instance.on("ON_READY", () => {
+    markActivity();
+    console.log(`[${new Date().toISOString()}] Push receiver ready.`);
   });
 
   await instance.connect();
   console.log("Push listener ready -- waiting for raid alerts.");
+
+  // Watchdog: the library's own heartbeat should catch a dead socket within
+  // ~10 minutes (5 min interval x2) and auto-reconnect, but if that ever
+  // fails silently (e.g. Koyeb's network layer drops an idle TCP connection
+  // without either side seeing a close event), force a hard reconnect
+  // ourselves rather than sitting there marked "connected" while actually
+  // deaf to incoming alerts.
+  const WATCHDOG_STALE_MS = 15 * 60 * 1000;
+  setInterval(() => {
+    const staleMs = Date.now() - lastActivityAt.getTime();
+    if (staleMs > WATCHDOG_STALE_MS) {
+      console.warn(
+        `[${new Date().toISOString()}] Watchdog: no socket activity for ${Math.round(staleMs / 1000)}s -- forcing reconnect.`
+      );
+      connected = false;
+      markActivity();
+      instance.connect().catch((err: unknown) => {
+        console.error("Watchdog reconnect attempt failed:", err);
+      });
+    }
+  }, 5 * 60 * 1000);
 
   return {
     isConnected: () => connected,
