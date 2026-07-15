@@ -68,6 +68,25 @@ the bot.
 
 ## ⏳ What still needs doing / open issues
 
+### 0. Twilio phone-call alerts (NEW -- wired in, needs Koyeb secrets)
+`src/twilio.ts` is built and wired into `handleAlert` in `index.ts`. On every
+raid alert the bot now calls every number in `TWILIO_CALL_NUMBERS` in parallel,
+speaking the alert message aloud. Works on iPhone and Android even screen-off.
+All Twilio env vars are optional -- the bot runs fine without them (logs one
+line and skips the call step). To enable, set these in Koyeb:
+
+| Secret | Value |
+|---|---|
+| `TWILIO_ACCOUNT_SID` | From Twilio Console > Account Info |
+| `TWILIO_AUTH_TOKEN` | From Twilio Console > Account Info (treat as secret) |
+| `TWILIO_FROM_NUMBER` | Your active Twilio number in E.164, e.g. `+12015551234` |
+| `TWILIO_CALL_NUMBERS` | Comma-separated numbers to call, e.g. `+447911123456` |
+| `TWILIO_CALL_MESSAGE` | Optional -- what the robot voice says on the call |
+
+The call is placed via Twilio's REST API using `fetch` -- no extra npm package.
+TwiML says the message twice with a 1-second pause between repetitions so it
+is hard to miss. Call timeout is 30 seconds (hangs up if unanswered).
+
 ### 1. Set up secrets (REQUIRED before the bot can run)
 The workflow fails at startup without these. Set them via Replit's Secrets panel:
 
