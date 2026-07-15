@@ -11,7 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { useLocation } from 'wouter';
-import { Loader2, Shield, Trash2, Key, Save, Users, Check, X, Link2, Copy, RefreshCw } from 'lucide-react';
+import { Loader2, Shield, Trash2, Key, Save, Users, Check, X, Link2, Copy, RefreshCw, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
@@ -111,6 +111,9 @@ export default function ClanSettings({ id }: { id: number }) {
   return (
     <div className="space-y-8 max-w-4xl mx-auto pb-24">
       <div>
+        <Button variant="ghost" size="sm" className="mb-4 -ml-2 font-mono text-muted-foreground hover:text-foreground" onClick={() => setLocation(`/clans/${id}`)}>
+          <ArrowLeft className="h-4 w-4 mr-1" /> Back to clan
+        </Button>
         <h1 className="text-3xl font-display font-bold tracking-widest uppercase mb-2">Clan Settings</h1>
         <p className="text-muted-foreground font-mono">Manage settings for {clan.name}.</p>
       </div>
