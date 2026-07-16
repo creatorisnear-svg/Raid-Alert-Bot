@@ -43,7 +43,9 @@
       [
         "expo-notifications",
         {
-          "sounds": ["./assets/sounds/siren.mp3"],
+          "sounds": [
+            "./assets/sounds/siren.mp3"
+          ],
           "icon": "./assets/images/icon.png",
           "color": "#c0392b",
           "androidMode": "default"
@@ -55,7 +57,10 @@
       "reactCompiler": true
     },
     "extra": {
-      "eas": {}
-    }
+      "eas": {
+        "projectId": "66144eee-c737-47d8-ba1f-f4a8d45d1ee8"
+      }
+    },
+    "owner": "zokgu"
   }
 }
