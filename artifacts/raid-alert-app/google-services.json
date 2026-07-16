@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "514098223742",
+    "project_id": "aviv-raid-alerts",
+    "storage_bucket": "aviv-raid-alerts.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:514098223742:android:9654afb3b91ef25ec9162f",
+        "android_client_info": {
+          "package_name": "com.tck.raidalerts"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAcq4rQOJo3Mpt4nLPp5bMgvr-yPnaLABk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
