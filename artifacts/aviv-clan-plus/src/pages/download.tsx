@@ -79,7 +79,7 @@ export default function Download() {
           </div>
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-display font-bold tracking-widest uppercase leading-tight mb-6">
-            TCK Raid<br />
+            AVIV Raid<br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-amber-500">
               Alerts App
             </span>

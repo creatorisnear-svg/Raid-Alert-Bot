@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "TCK Raid Alerts",
+    "name": "AVIV Raid Alerts",
     "slug": "raid-alert-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -18,6 +18,7 @@
     },
     "android": {
       "package": "com.tck.raidalerts",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#0b0e0b"
