@@ -27,7 +27,12 @@ export function createHealthServer(
   });
 
   app.get("/api/config", (_req, res) => {
-    res.json({ clanName: config.clanName, vapidPublicKey: vapidKeys.publicKey });
+    res.json({
+      clanName: config.clanName,
+      clanId:   config.clanId,
+      clanColor: config.clanColor,
+      vapidPublicKey: vapidKeys.publicKey,
+    });
   });
 
   app.post("/api/subscribe", (req, res) => {

@@ -8,6 +8,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   Modal,
@@ -17,6 +18,7 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import Animated, {
@@ -35,7 +37,7 @@ import * as Notifications from 'expo-notifications';
 import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
-import { fetchClanRegistry, loadCachedClans, FALLBACK_CLANS, type Clan } from '@/constants/clans';
+import { loadStoredClans, addClanByUrl, removeClanById, FALLBACK_CLANS, type Clan } from '@/constants/clans';
 
 const avivLogo = require('../assets/images/aviv-logo.png') as number;
 
@@ -117,15 +119,39 @@ function ClanPickerModal({
   selected,
   clans,
   onSelect,
+  onAdd,
+  onRemove,
   onClose,
 }: {
   visible: boolean;
   selected: Clan;
   clans: Clan[];
   onSelect: (clan: Clan) => void;
+  onAdd: (url: string) => Promise<void>;
+  onRemove: (id: string) => void;
   onClose: () => void;
 }) {
   const insets = useSafeAreaInsets();
+  const [adding,       setAdding]       = useState(false);
+  const [url,          setUrl]          = useState('');
+  const [connecting,   setConnecting]   = useState(false);
+  const [connectError, setConnectError] = useState('');
+
+  function resetAdd() { setAdding(false); setUrl(''); setConnectError(''); }
+
+  async function handleConnect() {
+    if (!url.trim()) return;
+    setConnecting(true);
+    setConnectError('');
+    try {
+      await onAdd(url.trim());
+      resetAdd();
+    } catch (err) {
+      setConnectError(err instanceof Error ? err.message : 'Could not reach that bot');
+    } finally {
+      setConnecting(false);
+    }
+  }
 
   return (
     <Modal
@@ -135,17 +161,13 @@ function ClanPickerModal({
       onRequestClose={onClose}
     >
       <View style={picker.overlay}>
-        {/* Tap outside to close */}
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
-        {/* Sheet */}
         <View style={[picker.sheet, { paddingBottom: Math.max(insets.bottom, 24) }]}>
-          {/* Handle */}
           <View style={picker.handle} />
 
-          {/* Header */}
           <View style={picker.header}>
-            <Text style={picker.headerTitle}>Select Your Clan</Text>
+            <Text style={picker.headerTitle}>Your Clans</Text>
             <Pressable onPress={onClose} style={picker.closeBtn} hitSlop={12}>
               <MaterialCommunityIcons name="close" size={20} color={C.textDim} />
             </Pressable>
@@ -153,53 +175,93 @@ function ClanPickerModal({
 
           <View style={picker.divider} />
 
-          {/* Clan list */}
-          <ScrollView style={picker.list} showsVerticalScrollIndicator={false}>
+          <ScrollView style={picker.list} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            {/* ── Clan rows ── */}
             {clans.map(clan => {
               const isSelected = clan.id === selected.id;
-              const hasUrl = !!clan.botUrl;
+              const canRemove  = clans.length > 1 && !isSelected;
               return (
                 <Pressable
                   key={clan.id}
-                  onPress={() => hasUrl ? onSelect(clan) : undefined}
+                  onPress={() => clan.botUrl ? onSelect(clan) : undefined}
                   style={({ pressed }) => [
                     picker.clanRow,
-                    isSelected && { backgroundColor: `${clan.color}12` },
-                    pressed && hasUrl && { opacity: 0.7 },
+                    isSelected && { backgroundColor: `${clan.color}18` },
+                    pressed && clan.botUrl && { opacity: 0.7 },
                   ]}
                 >
-                  {/* Color swatch */}
                   <View style={[picker.swatch, { backgroundColor: clan.color }]} />
-
-                  {/* Info */}
                   <View style={picker.clanInfo}>
-                    <Text style={[picker.clanName, !hasUrl && { color: C.textFaint }]}>
-                      {clan.name}
-                    </Text>
-                    {!hasUrl && (
-                      <Text style={picker.clanNoUrl}>Bot URL not configured</Text>
-                    )}
+                    <Text style={picker.clanName}>{clan.name}</Text>
+                    <Text style={picker.clanUrl} numberOfLines={1}>{clan.botUrl || 'No URL'}</Text>
                   </View>
-
-                  {/* Check or chevron */}
-                  {isSelected ? (
-                    <MaterialCommunityIcons name="check-circle" size={22} color={C.active} />
-                  ) : hasUrl ? (
-                    <MaterialCommunityIcons name="chevron-right" size={22} color={C.textFaint} />
-                  ) : (
-                    <MaterialCommunityIcons name="alert-circle-outline" size={18} color={C.textFaint} />
+                  {isSelected
+                    ? <MaterialCommunityIcons name="check-circle" size={22} color={C.active} />
+                    : <MaterialCommunityIcons name="chevron-right" size={20} color={C.textFaint} />
+                  }
+                  {canRemove && (
+                    <Pressable
+                      onPress={() => onRemove(clan.id)}
+                      hitSlop={12}
+                      style={picker.removeBtn}
+                    >
+                      <MaterialCommunityIcons name="trash-can-outline" size={17} color={C.textFaint} />
+                    </Pressable>
                   )}
                 </Pressable>
               );
             })}
-          </ScrollView>
 
-          <View style={picker.divider} />
-          <Text style={picker.footer}>
-            To add clans, edit{' '}
-            <Text style={picker.footerMono}>constants/clans.ts</Text>
-            {' '}in the app source
-          </Text>
+            {/* ── Add clan ── */}
+            {!adding ? (
+              <Pressable
+                onPress={() => setAdding(true)}
+                style={({ pressed }) => [picker.addRow, pressed && { opacity: 0.7 }]}
+              >
+                <MaterialCommunityIcons name="plus-circle-outline" size={19} color={C.textDim} />
+                <Text style={picker.addLabel}>Add Clan</Text>
+              </Pressable>
+            ) : (
+              <View style={picker.addForm}>
+                <Text style={picker.addFormTitle}>Paste your clan's bot URL</Text>
+                <Text style={picker.addFormHint}>
+                  Your clan admin deploys a raid-alert-bot and shares the URL.
+                  Paste it below — the name and colour are detected automatically.
+                </Text>
+                <TextInput
+                  style={picker.addInput}
+                  value={url}
+                  onChangeText={setUrl}
+                  placeholder="https://your-clan-bot.koyeb.app"
+                  placeholderTextColor={C.textFaint}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="url"
+                  returnKeyType="go"
+                  onSubmitEditing={handleConnect}
+                  autoFocus
+                />
+                {!!connectError && (
+                  <Text style={picker.addError}>{connectError}</Text>
+                )}
+                <View style={picker.addActions}>
+                  <Pressable onPress={resetAdd} style={picker.cancelBtn}>
+                    <Text style={picker.cancelText}>Cancel</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={handleConnect}
+                    disabled={connecting || !url.trim()}
+                    style={[picker.connectBtn, (connecting || !url.trim()) && { opacity: 0.45 }]}
+                  >
+                    {connecting
+                      ? <ActivityIndicator size="small" color={C.white} />
+                      : <Text style={picker.connectText}>Connect</Text>
+                    }
+                  </Pressable>
+                </View>
+              </View>
+            )}
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -223,29 +285,16 @@ export default function HomeScreen() {
 
   // ── Init ───────────────────────────────────────────────────────────────────
   useEffect(() => {
-    // 1. Load last-cached clan list immediately (no flicker)
-    loadCachedClans().then(cached => {
-      setClans(cached);
-      // Restore previously selected clan from the cached list
+    // Load on-device clan list then restore selected clan
+    loadStoredClans().then(stored => {
+      setClans(stored);
       AsyncStorage.getItem(STORAGE_KEY).then(id => {
         if (id) {
-          const saved = cached.find(c => c.id === id);
+          const saved = stored.find(c => c.id === id);
           if (saved) setClan(saved);
         }
       }).catch(() => {});
     }).catch(() => {});
-
-    // 2. Fetch the live list from the bot registry (non-blocking)
-    fetchClanRegistry().then(fresh => {
-      setClans(fresh);
-      // If the active clan is in the fresh list, keep it; otherwise stay put.
-      AsyncStorage.getItem(STORAGE_KEY).then(id => {
-        if (id) {
-          const updated = fresh.find(c => c.id === id);
-          if (updated) setClan(updated); // refresh botUrl in case it changed
-        }
-      }).catch(() => {});
-    }).catch(() => { /* keep cached list on network failure */ });
 
     createAndroidChannel();
 
@@ -332,6 +381,44 @@ export default function HomeScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
   }
 
+  // ── Add clan by URL ────────────────────────────────────────────────────────
+  async function handleAddClan(url: string) {
+    const newClan = await addClanByUrl(url); // throws on failure — let picker handle it
+    const updated = await loadStoredClans();
+    setClans(updated);
+    // Auto-switch to the newly added clan
+    setClan(newClan);
+    setStatus('idle');
+    setError('');
+    await AsyncStorage.setItem(STORAGE_KEY, newClan.id);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }
+
+  // ── Remove clan ────────────────────────────────────────────────────────────
+  async function handleRemoveClan(id: string) {
+    // Unsubscribe from that clan's bot first (best effort)
+    const target = clans.find(c => c.id === id);
+    if (target?.botUrl) {
+      try {
+        const token = await getPushToken();
+        await fetch(`${target.botUrl}/api/unsubscribe-native`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        });
+      } catch { /* ignore */ }
+    }
+    const updated = await removeClanById(id);
+    setClans(updated);
+    if (clan.id === id && updated.length > 0) {
+      const next = updated[0]!;
+      setClan(next);
+      setStatus('idle');
+      await AsyncStorage.setItem(STORAGE_KEY, next.id);
+    }
+    Haptics.selectionAsync();
+  }
+
   // ── Clan switch ────────────────────────────────────────────────────────────
   async function handleClanSelect(newClan: Clan) {
     if (newClan.id === clan.id) { setShowPicker(false); return; }
@@ -395,6 +482,8 @@ export default function HomeScreen() {
         selected={clan}
         clans={clans}
         onSelect={handleClanSelect}
+        onAdd={handleAddClan}
+        onRemove={handleRemoveClan}
         onClose={() => setShowPicker(false)}
       />
 
@@ -685,7 +774,7 @@ const picker = StyleSheet.create({
     backgroundColor: C.sheet,
     borderTopLeftRadius: 16, borderTopRightRadius: 16,
     borderTopWidth: 1, borderTopColor: C.borderBright,
-    maxHeight: '80%',
+    maxHeight: '85%',
   },
   handle: {
     width: 40, height: 4, borderRadius: 2,
@@ -700,29 +789,53 @@ const picker = StyleSheet.create({
     flex: 1, fontSize: 16, fontWeight: '700',
     color: C.text, fontFamily: 'Inter_700Bold',
   },
-  closeBtn: {
-    padding: 4,
-    backgroundColor: C.surface, borderRadius: 20,
-  },
+  closeBtn: { padding: 4, backgroundColor: C.surface, borderRadius: 20 },
   divider: { height: 1, backgroundColor: C.border, marginHorizontal: 16 },
-  list: { paddingHorizontal: 16, paddingTop: 8 },
+  list: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 },
 
+  // Clan rows
   clanRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    paddingVertical: 16,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingVertical: 14, paddingHorizontal: 10,
     borderBottomWidth: 1, borderBottomColor: C.border,
-    borderRadius: 8, marginBottom: 2,
-    paddingHorizontal: 12,
   },
-  swatch: { width: 14, height: 14, borderRadius: 7 },
+  swatch: { width: 12, height: 12, borderRadius: 6 },
   clanInfo: { flex: 1 },
   clanName: { fontSize: 16, fontWeight: '700', color: C.text, fontFamily: 'Inter_700Bold' },
-  clanNoUrl: { fontSize: 11, color: C.textFaint, fontFamily: 'Inter_400Regular', marginTop: 2 },
+  clanUrl: { fontSize: 10, color: C.textFaint, fontFamily: 'Inter_400Regular', marginTop: 2 },
+  removeBtn: { padding: 6 },
 
-  footer: {
-    paddingHorizontal: 20, paddingTop: 14, paddingBottom: 8,
-    fontSize: 11, color: C.textFaint,
-    fontFamily: 'Inter_400Regular', textAlign: 'center',
+  // Add clan row
+  addRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingVertical: 16, paddingHorizontal: 10,
   },
-  footerMono: { fontFamily: 'Inter_600SemiBold', color: C.textDim },
+  addLabel: { fontSize: 14, color: C.textDim, fontFamily: 'Inter_400Regular' },
+
+  // Add clan form
+  addForm: {
+    paddingVertical: 14, paddingHorizontal: 10, gap: 10,
+    borderTopWidth: 1, borderTopColor: C.border,
+  },
+  addFormTitle: { fontSize: 13, fontWeight: '700', color: C.text, fontFamily: 'Inter_700Bold' },
+  addFormHint: { fontSize: 11, color: C.textFaint, fontFamily: 'Inter_400Regular', lineHeight: 16 },
+  addInput: {
+    backgroundColor: C.surface, borderWidth: 1, borderColor: C.borderBright,
+    borderRadius: 6, paddingHorizontal: 12, paddingVertical: 10,
+    fontSize: 13, color: C.text, fontFamily: 'Inter_400Regular',
+  },
+  addError: { fontSize: 12, color: '#e74c3c', fontFamily: 'Inter_400Regular' },
+  addActions: { flexDirection: 'row', gap: 10, marginTop: 2 },
+  cancelBtn: {
+    flex: 1, paddingVertical: 11, borderRadius: 6,
+    borderWidth: 1, borderColor: C.borderBright,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  cancelText: { fontSize: 13, color: C.textDim, fontFamily: 'Inter_400Regular' },
+  connectBtn: {
+    flex: 2, paddingVertical: 11, borderRadius: 6,
+    backgroundColor: '#e8430a',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  connectText: { fontSize: 13, fontWeight: '700', color: C.white, fontFamily: 'Inter_700Bold' },
 });
