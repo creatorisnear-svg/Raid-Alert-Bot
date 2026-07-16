@@ -5,6 +5,7 @@ import { PushListenerHandle } from "./pushListener";
 import { VapidKeys } from "./vapidStore";
 import { addSubscriber, removeSubscriberByEndpoint, StoredSubscription } from "./subscribersStore";
 import { addNativeSubscriber, removeNativeSubscriber } from "./nativeSubscribersStore";
+import { loadClans, upsertClan, removeClan } from "./clanRegistryStore";
 
 const PUBLIC_DIR = path.join(__dirname, "..", "public");
 
@@ -73,6 +74,44 @@ export function createHealthServer(
       return;
     }
     removeNativeSubscriber(token);
+    res.status(200).json({ removed: true });
+  });
+
+  // ── Clan registry ────────────────────────────────────────────────────────
+  // Public: the Android app fetches this on every launch to get the live
+  // clan list without needing an APK rebuild.
+  app.get("/api/clans", (_req, res) => {
+    res.json(loadClans());
+  });
+
+  // Called by each clan's bot on startup to register / re-register itself.
+  // Requires the X-Registry-Key header to match CLAN_REGISTRY_KEY.
+  app.post("/api/register-clan", (req, res) => {
+    const key = req.headers["x-registry-key"];
+    if (!config.registryKey || key !== config.registryKey) {
+      res.status(401).json({ error: "Unauthorized — set CLAN_REGISTRY_KEY on the registry bot" });
+      return;
+    }
+    const { id, name, color, botUrl } = req.body as {
+      id?: string; name?: string; color?: string; botUrl?: string;
+    };
+    if (!id || !name || !botUrl) {
+      res.status(400).json({ error: "Missing required fields: id, name, botUrl" });
+      return;
+    }
+    upsertClan({ id, name, color: color ?? "#e8430a", botUrl });
+    console.log(`Clan registered: ${name} (${id}) → ${botUrl}`);
+    res.status(200).json({ registered: true });
+  });
+
+  // Remove a clan from the registry (e.g. when decommissioning a bot).
+  app.delete("/api/clans/:id", (req, res) => {
+    const key = req.headers["x-registry-key"];
+    if (!config.registryKey || key !== config.registryKey) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+    removeClan(req.params["id"] ?? "");
     res.status(200).json({ removed: true });
   });
 

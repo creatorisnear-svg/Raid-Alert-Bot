@@ -35,7 +35,7 @@ import * as Notifications from 'expo-notifications';
 import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
-import { AVAILABLE_CLANS, DEFAULT_CLAN, type Clan } from '@/constants/clans';
+import { fetchClanRegistry, loadCachedClans, FALLBACK_CLANS, type Clan } from '@/constants/clans';
 
 const avivLogo = require('../assets/images/aviv-logo.png') as number;
 
@@ -115,11 +115,13 @@ function BlinkDot({ color }: { color: string }) {
 function ClanPickerModal({
   visible,
   selected,
+  clans,
   onSelect,
   onClose,
 }: {
   visible: boolean;
   selected: Clan;
+  clans: Clan[];
   onSelect: (clan: Clan) => void;
   onClose: () => void;
 }) {
@@ -153,7 +155,7 @@ function ClanPickerModal({
 
           {/* Clan list */}
           <ScrollView style={picker.list} showsVerticalScrollIndicator={false}>
-            {AVAILABLE_CLANS.map(clan => {
+            {clans.map(clan => {
               const isSelected = clan.id === selected.id;
               const hasUrl = !!clan.botUrl;
               return (
@@ -208,7 +210,8 @@ function ClanPickerModal({
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
 
-  const [clan,       setClan]       = useState<Clan>(DEFAULT_CLAN);
+  const [clan,       setClan]       = useState<Clan>(FALLBACK_CLANS[0]!);
+  const [clans,      setClans]      = useState<Clan[]>(FALLBACK_CLANS);
   const [showPicker, setShowPicker] = useState(false);
   const [status,     setStatus]     = useState<Status>('idle');
   const [alerts,     setAlerts]     = useState<AlertItem[]>([]);
@@ -220,13 +223,29 @@ export default function HomeScreen() {
 
   // ── Init ───────────────────────────────────────────────────────────────────
   useEffect(() => {
-    // Restore saved clan
-    AsyncStorage.getItem(STORAGE_KEY).then(id => {
-      if (id) {
-        const saved = AVAILABLE_CLANS.find(c => c.id === id);
-        if (saved) setClan(saved);
-      }
+    // 1. Load last-cached clan list immediately (no flicker)
+    loadCachedClans().then(cached => {
+      setClans(cached);
+      // Restore previously selected clan from the cached list
+      AsyncStorage.getItem(STORAGE_KEY).then(id => {
+        if (id) {
+          const saved = cached.find(c => c.id === id);
+          if (saved) setClan(saved);
+        }
+      }).catch(() => {});
     }).catch(() => {});
+
+    // 2. Fetch the live list from the bot registry (non-blocking)
+    fetchClanRegistry().then(fresh => {
+      setClans(fresh);
+      // If the active clan is in the fresh list, keep it; otherwise stay put.
+      AsyncStorage.getItem(STORAGE_KEY).then(id => {
+        if (id) {
+          const updated = fresh.find(c => c.id === id);
+          if (updated) setClan(updated); // refresh botUrl in case it changed
+        }
+      }).catch(() => {});
+    }).catch(() => { /* keep cached list on network failure */ });
 
     createAndroidChannel();
 
@@ -374,6 +393,7 @@ export default function HomeScreen() {
       <ClanPickerModal
         visible={showPicker}
         selected={clan}
+        clans={clans}
         onSelect={handleClanSelect}
         onClose={() => setShowPicker(false)}
       />
