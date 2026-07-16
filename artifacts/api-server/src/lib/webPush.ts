@@ -2,6 +2,7 @@ import webpush from "web-push";
 import { db, pushSubscriptionsTable, clanMembersTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { logger } from "./logger";
+import { sendNativePushToClan } from "./nativePush";
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
@@ -53,16 +54,21 @@ export async function sendPushToClан(
   const activeSubs = subs.filter((s) => userIds.includes(s.userId));
   const payload = JSON.stringify({ title, body, clanId });
 
-  await Promise.allSettled(
-    activeSubs.map((sub) =>
+  await Promise.allSettled([
+    // Web push (PWA subscribers)
+    ...activeSubs.map((sub) =>
       webpush
         .sendNotification(
           { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
           payload,
         )
         .catch((err) => {
-          logger.warn({ err, endpoint: sub.endpoint }, "Push notification failed");
+          logger.warn({ err, endpoint: sub.endpoint }, "Web push notification failed");
         }),
     ),
-  );
+    // Native push (Android app subscribers)
+    sendNativePushToClan(clanId, title, body).catch((err) => {
+      logger.warn({ err }, "Native push failed");
+    }),
+  ]);
 }

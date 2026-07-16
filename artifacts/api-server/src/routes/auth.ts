@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { logger } from "../lib/logger";
+import { generateMobileToken } from "../lib/mobileAuth";
 
 const router: IRouter = Router();
 
@@ -11,12 +12,21 @@ const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
 const REDIRECT_URI = `${APP_URL}/api/auth/discord/callback`;
 
 router.get("/auth/discord", (req, res): void => {
+  // Mobile app passes ?platform=mobile&redirect=raid-alert-app://auth
+  // We encode both in `state` so Discord passes it back unchanged.
+  let state: string;
+  if (req.query.platform === "mobile" && req.query.redirect) {
+    state = `mobile:${String(req.query.redirect)}`;
+  } else {
+    state = req.query.next ? String(req.query.next) : "/dashboard";
+  }
+
   const params = new URLSearchParams({
     client_id: DISCORD_CLIENT_ID,
     redirect_uri: REDIRECT_URI,
     response_type: "code",
     scope: "identify",
-    state: req.query.next ? String(req.query.next) : "/dashboard",
+    state,
   });
   res.redirect(`https://discord.com/api/oauth2/authorize?${params}`);
 });
@@ -97,10 +107,15 @@ router.get("/auth/discord/callback", async (req, res): Promise<void> => {
       req.session.save((err) => (err ? reject(err) : resolve())),
     );
 
+    // Mobile OAuth: redirect back to the app's custom URL scheme with a token
+    if (typeof state === "string" && state.startsWith("mobile:")) {
+      const appRedirect = state.slice("mobile:".length);
+      const mobileToken = await generateMobileToken(user.id);
+      res.redirect(`${appRedirect}?token=${mobileToken}`);
+      return;
+    }
+
     const next = typeof state === "string" && state.startsWith("/") ? state : "/dashboard";
-    // The combined production service serves the frontend at the root path
-    // (not under /aviv-clan-plus — that prefix only applied to the old
-    // Replit-artifact routing setup), so redirect straight to APP_URL + next.
     res.redirect(`${APP_URL}${next}`);
   } catch (err) {
     req.log.error({ err }, "Discord OAuth error");

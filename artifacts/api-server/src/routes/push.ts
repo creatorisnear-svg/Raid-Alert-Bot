@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, pushSubscriptionsTable, clanMembersTable } from "@workspace/db";
+import { db, pushSubscriptionsTable, nativePushSubscriptionsTable, clanMembersTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { requireAuth } from "../middleware/requireAuth";
 import { getVapidPublicKey } from "../lib/webPush";
@@ -56,6 +56,54 @@ router.get("/clans/:clanId/push-vapid", async (req, res): Promise<void> => {
     return;
   }
   res.json({ publicKey });
+});
+
+// ── Native (Expo / Android app) push subscriptions ───────────────────────────
+
+router.post("/clans/:clanId/native-push-subscribe", requireAuth, async (req, res): Promise<void> => {
+  const clanId = parseInt(Array.isArray(req.params.clanId) ? req.params.clanId[0] : req.params.clanId, 10);
+  const userId = req.session.userId!;
+  const { token } = req.body as { token?: string };
+
+  if (!token || typeof token !== "string") {
+    res.status(400).json({ error: "token is required" });
+    return;
+  }
+
+  // Must be a clan member and not silenced to receive alerts
+  const [member] = await db
+    .select()
+    .from(clanMembersTable)
+    .where(and(eq(clanMembersTable.clanId, clanId), eq(clanMembersTable.userId, userId)));
+  if (!member) { res.status(403).json({ error: "Not a member of this clan" }); return; }
+
+  // Upsert — ignore duplicates
+  await db
+    .insert(nativePushSubscriptionsTable)
+    .values({ clanId, userId, expoToken: token })
+    .onConflictDoNothing();
+
+  res.status(201).json({ success: true });
+});
+
+router.delete("/clans/:clanId/native-push-subscribe", requireAuth, async (req, res): Promise<void> => {
+  const clanId = parseInt(Array.isArray(req.params.clanId) ? req.params.clanId[0] : req.params.clanId, 10);
+  const userId = req.session.userId!;
+  const { token } = req.body as { token?: string };
+
+  if (!token) { res.status(400).json({ error: "token is required" }); return; }
+
+  await db
+    .delete(nativePushSubscriptionsTable)
+    .where(
+      and(
+        eq(nativePushSubscriptionsTable.clanId, clanId),
+        eq(nativePushSubscriptionsTable.userId, userId),
+        eq(nativePushSubscriptionsTable.expoToken, token),
+      ),
+    );
+
+  res.sendStatus(204);
 });
 
 export default router;

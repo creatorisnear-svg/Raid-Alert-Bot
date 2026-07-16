@@ -79,6 +79,23 @@ export async function ensureSchema(): Promise<void> {
         token      TEXT NOT NULL UNIQUE,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
+
+      CREATE TABLE IF NOT EXISTS native_push_subscriptions (
+        id          SERIAL PRIMARY KEY,
+        clan_id     INTEGER NOT NULL,
+        user_id     INTEGER NOT NULL,
+        expo_token  TEXT NOT NULL,
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (clan_id, user_id, expo_token)
+      );
+
+      CREATE TABLE IF NOT EXISTS mobile_tokens (
+        id          SERIAL PRIMARY KEY,
+        token       TEXT NOT NULL UNIQUE,
+        user_id     INTEGER NOT NULL,
+        expires_at  TIMESTAMPTZ NOT NULL,
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
     `);
   } finally {
     client.release();
