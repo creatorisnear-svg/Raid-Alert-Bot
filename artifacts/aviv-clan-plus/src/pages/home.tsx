@@ -1,6 +1,6 @@
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { Zap, Bell, Users, ChevronRight } from 'lucide-react';
+import { Zap, Bell, Users, ChevronRight, Download } from 'lucide-react';
 import logoUrl from '@/assets/logo.png';
 import { useGetMe } from '@workspace/api-client-react';
 import { SiteFooter } from '@/components/site-footer';
@@ -81,6 +81,12 @@ export default function Home() {
                 </Button>
               )
             )}
+            <Button asChild size="lg" variant="outline" className="clip-edges text-lg group">
+              <Link href="/download">
+                <Download className="mr-2 h-5 w-5 group-hover:translate-y-0.5 transition-transform" />
+                Get Android App
+              </Link>
+            </Button>
           </div>
         </section>
 

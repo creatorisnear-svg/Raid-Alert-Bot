@@ -15,6 +15,7 @@ import ClanSettings from '@/pages/clans/settings';
 import InviteJoin from '@/pages/invite';
 import Terms from '@/pages/legal/terms';
 import Privacy from '@/pages/legal/privacy';
+import Download from '@/pages/download';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,6 +35,7 @@ function Router() {
       </Route>
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />
+      <Route path="/download" component={Download} />
       <Route path="/dashboard">
         <AppLayout><Dashboard /></AppLayout>
       </Route>
