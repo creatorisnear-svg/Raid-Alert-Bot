@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import logoUrl from '@/assets/logo.png';
 import { SiteFooter } from '@/components/site-footer';
 
-const APK_URL = 'https://expo.dev/artifacts/eas/f0_E0JBqek625Pm8GVWqJ-1duJsmpoDY3J_x_szv-DU.apk';
+const APK_URL = 'https://expo.dev/artifacts/eas/mGrvy4lqFdIszy1-od11i3qb-M9jmTs_vsG2Noyfn14.apk';
 
 const steps = [
   {
