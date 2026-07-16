@@ -5,6 +5,7 @@ import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { sessionMiddleware } from "./lib/session";
+import { validateMobileToken } from "./lib/mobileAuth";
 
 const app: Express = express();
 
@@ -40,6 +41,22 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(sessionMiddleware);
+
+// Mobile apps send their auth token as "Authorization: Bearer <token>".
+// If the session doesn't already have a user, validate the token and
+// backfill req.session.userId so all existing route auth checks work for
+// both web (cookie session) and mobile (bearer token) without changes.
+app.use(async (req, _res, next) => {
+  if (!req.session.userId) {
+    const auth = req.headers.authorization;
+    if (auth?.startsWith("Bearer ")) {
+      const token = auth.slice(7);
+      const userId = await validateMobileToken(token).catch(() => null);
+      if (userId) req.session.userId = userId;
+    }
+  }
+  next();
+});
 
 app.use("/api", router);
 
